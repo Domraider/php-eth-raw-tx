@@ -1,0 +1,20 @@
+{
+    "name": "domraider/php-eth-raw-tx",
+    "description": "PHP tool for creating Ethereum raw transactions",
+    "type": "library",
+    "require": {
+        "bitwasp/secp256k1-php": "^0.1.2"
+    },
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Etienne Roudeix",
+            "email": "etienne.roudeix@gmail.com"
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "EthereumRawTx\\" : "src/EthereumRawTx"
+        }
+    }
+}
