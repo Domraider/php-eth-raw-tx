@@ -8,9 +8,13 @@ namespace EthereumRawTx\Encoder;
  */
 class RplEncoder
 {
+
     static function encode($input)
     {
         if (is_string($input)) {
+            if($input === hex2bin("00")) {
+                return chr(128);
+            }
             if (strlen($input) == 1 && ord($input) < 128){
                 return $input;
             }
