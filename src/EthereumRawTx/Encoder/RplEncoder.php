@@ -8,13 +8,16 @@ namespace EthereumRawTx\Encoder;
  */
 class RplEncoder
 {
+
     static function encode($input)
     {
         if (is_string($input)) {
+            if($input === "\000") {
+                return chr(128);
+            }
             if (strlen($input) == 1 && ord($input) < 128){
                 return $input;
             }
-
             return self::encodeLength(strlen($input), 128) . $input;
         }
         if (is_array($input)) {
