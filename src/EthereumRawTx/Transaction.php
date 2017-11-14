@@ -3,6 +3,7 @@ namespace EthereumRawTx;
 
 use EthereumRawTx\Encoder\Keccak;
 use EthereumRawTx\Encoder\RplEncoder;
+use EthereumRawTx\Tool\Hex;
 
 class Transaction
 {
@@ -19,25 +20,14 @@ class Transaction
     protected $r;
     protected $s;
 
-    public function __construct(string $to, int $value = null, string $data = null, int $nonce = 1, int $gasPrice = 10000000000000, int $gasLimit = 196608)
+    public function __construct(string $to = null, int $value = null, string $data = null, int $nonce = 1, int $gasPrice = 10000000000000, int $gasLimit = 196608)
     {
-        $this->nonce = self::dec2hex($nonce);
-        $this->gasPrice = self::dec2hex($gasPrice);
-        $this->gasLimit = self::dec2hex($gasLimit);
-        $this->to = $to;
-        $this->value = null === $value ? null : self::dec2hex($value);
+        $this->nonce = Hex::fromDec($nonce);
+        $this->gasPrice = Hex::fromDec($gasPrice);
+        $this->gasLimit = Hex::fromDec($gasLimit);
+        $this->to = $to ?? '';
+        $this->value = null === $value ? '' : Hex::fromDec($value);
         $this->data = $data ?? '';
-    }
-
-    static public function dec2hex(int $integer)
-    {
-        $hex = dechex($integer);
-
-        if (strlen($hex) % 2) {
-            $hex = "0" . $hex;
-        }
-
-        return $hex;
     }
 
     /**
@@ -47,7 +37,7 @@ class Transaction
      */
     public function getRaw(string $privateKey, int $chainId = 1)
     {
-        $this->chainId = self::dec2hex($chainId);
+        $this->chainId = Hex::fromDec($chainId);
 
         $this->v = null;
         $this->r = null;
@@ -98,9 +88,9 @@ class Transaction
 
         $hexsign = bin2hex($serialized);
 
-        $this->r = substr($hexsign, 0, 64);
-        $this->s = substr($hexsign, 64);
-        $this->v = self::dec2hex($recId + 27 + hexdec($this->chainId) * 2 + 8);
+        $this->r = Hex::trim(substr($hexsign, 0, 64));
+        $this->s = Hex::trim(substr($hexsign, 64));
+        $this->v = Hex::fromDec($recId + 27 + hexdec($this->chainId) * 2 + 8);
     }
 
     protected function hash()
@@ -128,6 +118,7 @@ class Transaction
     protected function serialize()
     {
         $raw = $this->getInput();
+        var_dump($raw);
         $raw = array_map('hex2bin', $raw);
 
         return RplEncoder::encode($raw);

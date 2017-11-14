@@ -1,6 +1,8 @@
 <?php
 namespace EthereumRawTx\Encoder;
 
+use EthereumRawTx\Tool\Hex;
+
 /**
  * Class RplEncoder
  * @package EthereumRawTx\Encoder
@@ -36,7 +38,7 @@ class RplEncoder
         if ($l < 56) {
             return chr($l + $offset);
         } elseif ($l < 256 ** 8) {
-            $bl = hex2bin(dechex($l));
+            $bl = hex2bin(Hex::fromDec($l));
             return chr(strlen($bl) + $offset + 55) . $bl;
         } else {
             throw new \Exception('Failed to encode length');
