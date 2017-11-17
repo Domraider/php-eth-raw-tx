@@ -9,7 +9,7 @@ You need [secp256k1-php](https://github.com/Bit-Wasp/secp256k1-php).
 Which itself needs [secp256k1](https://github.com/bitcoin-core/secp256k1) to be installed on your system.
 
 Last tests were run using the following versions :
-* sha3sum-1.1.2
+* sha3sum-1.1.3
 * secp256k1-lastest-0.1.2
 
 *You will need `gcc`, `libtool`,  `make`, `automake` , which is standard package you can grab from apt, yum, brew...*
@@ -52,7 +52,7 @@ You need [keccak-256sum command line](https://github.com/maandree/sha3sum).
 Which itself needs [libkeccak](https://github.com/maandree/libkeccak) to be installed on your system.
 
 Last tests were run using the following versions :
-* sha3sum-1.1.2
+* sha3sum-1.1.3
 * libkeccak-1.1.4
 
 On **macOS** you may find clues [here](https://github.com/maandree/libkeccak/issues/7).
@@ -69,9 +69,9 @@ $>
 
 Then sha3sum
 ```bash
-$> curl -L0k https://github.com/maandree/sha3sum/archive/1.1.2.zip > sha3sum-1.1.2.zip
-$> unzip sha3sum-1.1.2.zip
-$> cd sha3sum-1.1.2
+$> curl -L0k https://github.com/maandree/sha3sum/archive/1.1.3.zip > sha3sum-1.1.3.zip
+$> unzip sha3sum-1.1.3.zip
+$> cd sha3sum-1.1.3
 $> make
 $> sudo make install PREFIX=/usr
 $>
