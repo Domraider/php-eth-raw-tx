@@ -24,22 +24,7 @@ class SmartContract
 
     public function getConstructBin(array $args)
     {
-        $args = array_values($args);
-
-        $result = $this->bin;
-
-        // check $args match expected ones
-        if (count($args) != count($this->abi[self::ABI_TYPE_CONSTRUCTOR]['inputs'])) {
-            throw new \Exception("Argument count does not match abi");
-        }
-
-        foreach ($this->abi[self::ABI_TYPE_CONSTRUCTOR]['inputs'] as $i => $input) {
-            $type = $input['type'];
-
-            $result .= $this->encodeParam($type, $args[$i]);
-        }
-
-        return $result;
+        return $this->bin . $this->parseInputs($this->abi[self::ABI_TYPE_CONSTRUCTOR]['inputs'], $args);
     }
 
     public function getMethodBin($method, array $args = [])
@@ -48,23 +33,20 @@ class SmartContract
             throw new \Exception("Method does not exists in abi");
         }
 
-        $args = array_values($args);
-
-        // check $args match expected ones
-        if (count($args) != count($this->abi[self::ABI_TYPE_FUNCTION][$method]['inputs'])) {
-            throw new \Exception("Argument count does not match abi");
-        }
-
-        $result = "";
-        foreach ($this->abi[self::ABI_TYPE_FUNCTION][$method]['inputs'] as $i => $input) {
-            $type = $input['type'];
-
-            $result .= $this->encodeParam($type, $args[$i]);
-        }
-
         $protoHash = Keccak::hash($this->abi[self::ABI_TYPE_FUNCTION][$method]['prototype'], 256);
 
-        return substr($protoHash, 0, 8) . $result;
+        return substr($protoHash, 0, 8) . $this->parseInputs($this->abi[self::ABI_TYPE_FUNCTION][$method]['inputs'], $args);
+    }
+
+    public function getEventBin($method, array $args = [])
+    {
+        if (!isset($this->abi[self::ABI_TYPE_EVENT][$method])) {
+            throw new \Exception("Method does not exists in abi");
+        }
+
+        $protoHash = Keccak::hash($this->abi[self::ABI_TYPE_EVENT][$method]['prototype'], 256);
+
+        return substr($protoHash, 0, 8) . $this->parseInputs($this->abi[self::ABI_TYPE_EVENT][$method]['inputs'], $args);
     }
 
     public function decodeResponse($method, $raw)
@@ -96,6 +78,25 @@ class SmartContract
             }
         }
 
+        return $result;
+    }
+
+    protected function parseInputs(array $abiInputs, array $values)
+    {
+        $values = array_values($values);
+
+        $result = '';
+
+        // check $args match expected ones
+        if (count($values) != count($abiInputs)) {
+            throw new \Exception("Argument count does not match abi");
+        }
+
+        foreach ($abiInputs as $i => $input) {
+            $type = $input['type'];
+
+            $result .= $this->encodeParam($type, $values[$i]);
+        }
 
         return $result;
     }
