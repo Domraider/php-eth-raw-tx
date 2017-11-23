@@ -1,6 +1,7 @@
 <?php
 namespace EthereumRawTx;
 
+use EthereumRawTx\Encoder\Keccak;
 use EthereumRawTx\Tool\Hex;
 
 class SmartContract
@@ -32,11 +33,69 @@ class SmartContract
             throw new \Exception("Argument count does not match abi");
         }
 
-        foreach ($this->abi[self::ABI_TYPE_CONSTRUCTOR]['inputs']  as $i => $input) {
+        foreach ($this->abi[self::ABI_TYPE_CONSTRUCTOR]['inputs'] as $i => $input) {
             $type = $input['type'];
 
             $result .= $this->encodeParam($type, $args[$i]);
         }
+
+        return $result;
+    }
+
+    public function getMethodBin($method, array $args = [])
+    {
+        if (!isset($this->abi[self::ABI_TYPE_FUNCTION][$method])) {
+            throw new \Exception("Method does not exists in abi");
+        }
+
+        $args = array_values($args);
+
+        // check $args match expected ones
+        if (count($args) != count($this->abi[self::ABI_TYPE_FUNCTION][$method]['inputs'])) {
+            throw new \Exception("Argument count does not match abi");
+        }
+
+        $result = "";
+        foreach ($this->abi[self::ABI_TYPE_FUNCTION][$method]['inputs'] as $i => $input) {
+            $type = $input['type'];
+
+            $result .= $this->encodeParam($type, $args[$i]);
+        }
+
+        $protoHash = Keccak::hash($this->abi[self::ABI_TYPE_FUNCTION][$method]['prototype'], 256);
+
+        return substr($protoHash, 0, 8) . $result;
+    }
+
+    public function decodeResponse($method, $raw)
+    {
+        if (!isset($this->abi[self::ABI_TYPE_FUNCTION][$method])) {
+            throw new \Exception("Method does not exists in abi");
+        }
+
+        $raw = Hex::cleanPrefix($raw);
+
+        $result = [];
+
+        foreach ($this->abi[self::ABI_TYPE_FUNCTION][$method]['outputs'] as $output) {
+            switch ($output['type']) {
+                case 'bool':
+                    $result[$output['name']] = hexdec(substr($raw, 0, 64)) ? true : false;
+                    $raw = substr($raw, 64);
+                    break;
+                case 'uint256':
+                    $result[$output['name']] = hexdec(substr($raw, 0, 64));
+                    $raw = substr($raw, 64);
+                    break;
+                case 'address':
+                    $result[$output['name']] = substr($raw, 64-40, 40);
+                    $raw = substr($raw, 64);
+                    break;
+                default:
+                    throw new \Exception('Unknown output type ' . $output['type']);
+            }
+        }
+
 
         return $result;
     }
@@ -52,6 +111,10 @@ class SmartContract
             switch ($type) {
                 case self::ABI_TYPE_CONSTRUCTOR:
                     $return[$type] = $abiRaw;
+                    continue;
+                case self::ABI_TYPE_FUNCTION:
+                    $return[$type][$abiRaw['name']] = $abiRaw;
+                    $return[$type][$abiRaw['name']]['prototype'] = $this->getPrototype($abiRaw);
                     continue;
                 default:
                     $return[$type][$abiRaw['name']] = $abiRaw;
@@ -96,4 +159,13 @@ class SmartContract
         }
     }
 
+    protected function getPrototype(array $abiRaw)
+    {
+        $types = [];
+        foreach ($abiRaw['inputs'] as $input) {
+            $types[] = $input['type'];
+        }
+
+        return sprintf('%s(%s)', $abiRaw['name'], implode(',', $types));
+    }
 }
