@@ -118,7 +118,6 @@ class Transaction
     protected function serialize()
     {
         $raw = $this->getInput();
-        var_dump($raw);
         $raw = array_map('hex2bin', $raw);
 
         return RplEncoder::encode($raw);

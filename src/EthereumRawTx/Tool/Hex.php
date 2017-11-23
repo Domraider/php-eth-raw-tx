@@ -22,4 +22,13 @@ class Hex
 
         return $hex;
     }
+
+    static function cleanPrefix($hex)
+    {
+        if(substr($hex,0,2) === '0x') {
+            return substr($hex, 2);
+        }
+
+        return $hex;
+    }
 }
