@@ -33,23 +33,18 @@ class SmartContract
             throw new \Exception("Method does not exists in abi");
         }
 
-        $protoHash = Keccak::hash($this->abi[self::ABI_TYPE_FUNCTION][$method]['prototype'], 256);
-
-        return substr($protoHash, 0, 8) . $this->parseInputs($this->abi[self::ABI_TYPE_FUNCTION][$method]['inputs'], $args);
+        return substr($this->abi[self::ABI_TYPE_FUNCTION][$method]['prototype'], 0, 8) . $this->parseInputs($this->abi[self::ABI_TYPE_FUNCTION][$method]['inputs'], $args);
     }
 
-    public function getEventBin($method, array $args = [])
+    public function getEventBin($event)
     {
-        if (!isset($this->abi[self::ABI_TYPE_EVENT][$method])) {
+        if (!isset($this->abi[self::ABI_TYPE_EVENT][$event])) {
             throw new \Exception("Method does not exists in abi");
         }
-
-        $protoHash = Keccak::hash($this->abi[self::ABI_TYPE_EVENT][$method]['prototype'], 256);
-
-        return substr($protoHash, 0, 8) . $this->parseInputs($this->abi[self::ABI_TYPE_EVENT][$method]['inputs'], $args);
+        return $this->abi[self::ABI_TYPE_EVENT][$event]['prototype'];
     }
 
-    public function decodeResponse($method, $raw)
+    public function decodeMethodResponse($method, $raw)
     {
         if (!isset($this->abi[self::ABI_TYPE_FUNCTION][$method])) {
             throw new \Exception("Method does not exists in abi");
@@ -57,29 +52,31 @@ class SmartContract
 
         $raw = Hex::cleanPrefix($raw);
 
-        $result = [];
+        return $this->parseOutputs($this->abi[self::ABI_TYPE_FUNCTION][$method]['outputs'], $raw);
+    }
 
-        foreach ($this->abi[self::ABI_TYPE_FUNCTION][$method]['outputs'] as $output) {
-            switch ($output['type']) {
-                case 'bool':
-                    $result[$output['name']] = hexdec(substr($raw, 0, 64)) ? true : false;
-                    $raw = substr($raw, 64);
-                    break;
-                case 'uint256':
-                    $result[$output['name']] = hexdec(substr($raw, 0, 64));
-                    $raw = substr($raw, 64);
-                    break;
-                case 'address':
-                    $result[$output['name']] = substr($raw, 64-40, 40);
-                    $raw = substr($raw, 64);
-                    break;
-                default:
-                    throw new \Exception('Unknown output type ' . $output['type']);
-            }
+    public function decodeEventResponse(array $values)
+    {
+        // If topics does not set , return $values
+        if (!isset($values['topics']) || !isset($values['topics'][0])) {
+            return $values;
         }
 
-        return $result;
+        $topic = Hex::cleanPrefix($values['topics'][0]);
+
+        if(!isset($this->abi['prototype'][$topic])) {
+            throw new \Exception("Event does not exists in abi");
+        }
+
+        $event = $this->abi['prototype'][$topic];
+
+        $values['eventName'] = $event;
+        $values['data'] = $this->parseOutputs($this->abi[self::ABI_TYPE_EVENT][$event]['inputs'], Hex::cleanPrefix($values['data']));
+
+
+        return $values;
     }
+
 
     protected function parseInputs(array $abiInputs, array $values)
     {
@@ -101,6 +98,19 @@ class SmartContract
         return $result;
     }
 
+    protected function parseOutputs(array $abiOutputs, $raw)
+    {
+        $result = [];
+
+        foreach ($abiOutputs as $i => $output) {
+            $type = $output['type'];
+
+            $result [$output['name']] = $this->decodeParam($type, $raw);
+        }
+
+        return $result;
+    }
+
     protected function parseAbi(array $abi)
     {
         $return = [];
@@ -116,6 +126,12 @@ class SmartContract
                 case self::ABI_TYPE_FUNCTION:
                     $return[$type][$abiRaw['name']] = $abiRaw;
                     $return[$type][$abiRaw['name']]['prototype'] = $this->getPrototype($abiRaw);
+                    continue;
+                case self::ABI_TYPE_EVENT:
+                    $prototype = $this->getPrototype($abiRaw);
+                    $return[$type][$abiRaw['name']] = $abiRaw;
+                    $return[$type][$abiRaw['name']]['prototype'] = $prototype;
+                    $return['prototype'][$prototype] = $abiRaw['name'];
                     continue;
                 default:
                     $return[$type][$abiRaw['name']] = $abiRaw;
@@ -160,6 +176,32 @@ class SmartContract
         }
     }
 
+    protected function decodeParam($type, &$raw)
+    {
+        switch ($type) {
+            case 'uint256':
+                $result = hexdec(substr($raw, 0, 64));
+                $raw = substr($raw, 64);
+                break;
+
+            case 'address':
+                $result = substr($raw, 64-40, 40);
+                $raw = substr($raw, 64);
+                break;
+
+            case 'bool':
+                $result = hexdec(substr($raw, 0, 64)) ? true : false;
+                $raw = substr($raw, 64);
+                break;
+
+            default:
+                throw new \Exception('Unknown input type ' . $type);
+        }
+
+        return $result;
+
+    }
+
     protected function getPrototype(array $abiRaw)
     {
         $types = [];
@@ -167,6 +209,8 @@ class SmartContract
             $types[] = $input['type'];
         }
 
-        return sprintf('%s(%s)', $abiRaw['name'], implode(',', $types));
+        $prototype = sprintf('%s(%s)', $abiRaw['name'], implode(',', $types));
+
+        return Keccak::hash($prototype, 256);
     }
 }
