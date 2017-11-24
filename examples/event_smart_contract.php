@@ -7,13 +7,7 @@ $smartContractAbi = "[{\"constant\":true,\"inputs\":[],\"name\":\"startDate\",\"
 
 $sc = new \EthereumRawTx\SmartContract($smartContractBinaries, $smartContractAbi);
 
-//$responseRaw = "0x000000000000000000000000000000000000000000000000000000005a16e154000000000000000000000000000000000000000000000000000000005a1832d4000000000000000000000000000000000000000000000000000000005a1832d4";
-//$responseRaw = "0x0000000000000000000000000000000000000000000000000000000000000000";
-$responseRaw = "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000005";
+$raw = $sc->getEventBin("BidAccepted");
 
-//$raw = $sc->decodeMethodResponse("getDates", $responseRaw);
-//$raw = $sc->decodeMethodResponse("getLeader", $responseRaw);
-$raw = $sc->decodeMethodResponse("getCurrentAmounts", $responseRaw);
-
-echo "Parsed response :" . PHP_EOL;
-var_dump($raw);
+echo "Generated raw transaction :" . PHP_EOL;
+echo $raw . PHP_EOL;
