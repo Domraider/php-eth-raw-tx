@@ -95,8 +95,9 @@ class Transaction
 
     protected function hash()
     {
+        $raw = $this->getInput();
+
         if (hexdec($this->chainId) > 0) {
-            $raw = $this->getInput();
             $raw['v'] = $this->chainId;
             $raw['r'] = "";
             $raw['s'] = "";
