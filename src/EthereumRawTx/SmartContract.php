@@ -143,7 +143,14 @@ class SmartContract
 
     protected function encodeParam($type, $value)
     {
+        // Detect and format an array type
+        if(strpos($type,'[') > 0) {
+            $type = substr($type,0,strpos($type,'[')+1);
+        }
+
         switch ($type) {
+
+            case 'uint8':
             case 'uint256':
                 // cast if not hex yet
                 if (false !== filter_var($value, FILTER_VALIDATE_INT)) {
@@ -152,7 +159,7 @@ class SmartContract
 
                 $value = Hex::cleanPrefix($value);
                 if (strlen($value) > 64) {
-                    throw new \Exception("unint256 cannot exeed 64 chars");
+                    throw new \Exception("$type cannot exeed 64 chars");
                 }
 
                 return str_pad($value, 64, '0', STR_PAD_LEFT);
@@ -170,6 +177,26 @@ class SmartContract
 
                 return str_pad($value, 64, '0', STR_PAD_LEFT);
 
+            case 'bytes32':
+                $value = Hex::cleanPrefix($value);
+                if (strlen($value) != 64) {
+                    throw new \Exception("bytes32 must be 64 chars");
+                }
+
+                return str_pad($value, 64, '0', STR_PAD_LEFT);
+
+            case 'bytes32[':
+                $ret = '';
+                foreach($value as $key => $val) {
+                    $val = Hex::cleanPrefix($val);
+                    if (strlen($val) != 64) {
+                        throw new \Exception("bytes32 must be 64 chars");
+                    }
+                    $ret = $ret.$val;
+                }
+
+                return $ret;
+
             default:
                 throw new \Exception("Unknown input type {$type}");
 
@@ -179,6 +206,8 @@ class SmartContract
     protected function decodeParam($type, &$raw)
     {
         switch ($type) {
+
+            case 'uint8':
             case 'uint256':
                 $result = hexdec(substr($raw, 0, 64));
                 $raw = substr($raw, 64);
@@ -191,6 +220,11 @@ class SmartContract
 
             case 'bool':
                 $result = hexdec(substr($raw, 0, 64)) ? true : false;
+                $raw = substr($raw, 64);
+                break;
+
+            case 'bytes32':
+                $result = substr($raw, 0, 64);
                 $raw = substr($raw, 64);
                 break;
 
