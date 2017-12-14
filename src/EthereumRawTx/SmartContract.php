@@ -144,8 +144,22 @@ class SmartContract
     protected function encodeParam($type, $value)
     {
         // Detect and format an array type
-        if(strpos($type,'[') > 0) {
-            $type = substr($type,0,strpos($type,'[')+1);
+        preg_match('/([a-zA-Z0-9]*)(\[([0-9]+)\])?/',$type,$match);
+        if(count($match) == 4) {
+
+            if(is_array($value) === false) {
+                throw new \Exception("Value must be an array");
+            }
+
+            if(count($value) != $match[3]) {
+                throw new \Exception("Value count does not match expected type");
+            }
+
+            $return = '';
+            foreach($value as $key => $val) {
+                $return.= $this->encodeParam($match[1],$val);
+            }
+            return $return;
         }
 
         switch ($type) {
@@ -184,18 +198,6 @@ class SmartContract
                 }
 
                 return str_pad($value, 64, '0', STR_PAD_LEFT);
-
-            case 'bytes32[':
-                $ret = '';
-                foreach($value as $key => $val) {
-                    $val = Hex::cleanPrefix($val);
-                    if (strlen($val) != 64) {
-                        throw new \Exception("bytes32 must be 64 chars");
-                    }
-                    $ret = $ret.$val;
-                }
-
-                return $ret;
 
             default:
                 throw new \Exception("Unknown input type {$type}");
