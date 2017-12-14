@@ -1,6 +1,7 @@
 <?php
 namespace EthereumRawTx;
 
+use BitWasp\Buffertools\Buffer;
 use EthereumRawTx\Encoder\Keccak;
 use EthereumRawTx\Tool\Hex;
 
@@ -22,9 +23,9 @@ class SmartContract
         $this->abi = $this->parseAbi(json_decode($abi, true));
     }
 
-    public function getConstructBin(array $args)
+    public function getConstructBin(array $args = [])
     {
-        return $this->bin . $this->parseInputs($this->abi[self::ABI_TYPE_CONSTRUCTOR]['inputs'], $args);
+        return Buffer::hex($this->bin . $this->parseInputs($this->abi[self::ABI_TYPE_CONSTRUCTOR]['inputs'], $args));
     }
 
     public function getMethodBin($method, array $args = [])
@@ -33,7 +34,7 @@ class SmartContract
             throw new \Exception("Method does not exists in abi");
         }
 
-        return substr($this->abi[self::ABI_TYPE_FUNCTION][$method]['prototype'], 0, 8) . $this->parseInputs($this->abi[self::ABI_TYPE_FUNCTION][$method]['inputs'], $args);
+        return Buffer::hex(substr($this->abi[self::ABI_TYPE_FUNCTION][$method]['prototype'], 0, 8) . $this->parseInputs($this->abi[self::ABI_TYPE_FUNCTION][$method]['inputs'], $args));
     }
 
     public function getEventBin($event)
@@ -41,7 +42,7 @@ class SmartContract
         if (!isset($this->abi[self::ABI_TYPE_EVENT][$event])) {
             throw new \Exception("Method does not exists in abi");
         }
-        return $this->abi[self::ABI_TYPE_EVENT][$event]['prototype'];
+        return Buffer::hex($this->abi[self::ABI_TYPE_EVENT][$event]['prototype']);
     }
 
     public function decodeMethodResponse($method, $raw)
@@ -129,10 +130,10 @@ class SmartContract
                     continue;
                 case self::ABI_TYPE_FUNCTION:
                     $return[$type][$abiRaw['name']] = $abiRaw;
-                    $return[$type][$abiRaw['name']]['prototype'] = $this->getPrototype($abiRaw);
+                    $return[$type][$abiRaw['name']]['prototype'] = $this->getPrototype($abiRaw)->getHex();
                     continue;
                 case self::ABI_TYPE_EVENT:
-                    $prototype = $this->getPrototype($abiRaw);
+                    $prototype = $this->getPrototype($abiRaw)->getHex();
                     $return[$type][$abiRaw['name']] = $abiRaw;
                     $return[$type][$abiRaw['name']]['prototype'] = $prototype;
                     $return['prototype'][$prototype] = $abiRaw['name'];
@@ -145,15 +146,17 @@ class SmartContract
         return $return;
     }
 
+    /**
+     * @param string $type
+     * @param array|Buffer $value
+     * @return string
+     * @throws \Exception
+     */
     protected function encodeParam($type, $value)
     {
         // Detect and format an array type
         preg_match('/([a-zA-Z0-9]*)(\[([0-9]+)\])?/',$type,$match);
         if(count($match) == 4) {
-
-            if(is_array($value) === false) {
-                throw new \Exception("Value must be an array");
-            }
 
             if(count($value) != $match[3]) {
                 throw new \Exception("Value count does not match expected type");
@@ -166,42 +169,36 @@ class SmartContract
             return $return;
         }
 
+        if ($value instanceof Buffer === false) {
+            throw new \Exception("Value must be an Buffer");
+        }
+
         switch ($type) {
 
             case 'uint8':
             case 'uint256':
-                // cast if not hex yet
-                if (false !== filter_var($value, FILTER_VALIDATE_INT)) {
-                    $value = dechex($value);
-                }
-
-                $value = Hex::cleanPrefix($value);
-                if (strlen($value) > 64) {
+                if (strlen($value->getHex()) > 64) {
                     throw new \Exception("$type cannot exeed 64 chars");
                 }
 
-                return str_pad($value, 64, '0', STR_PAD_LEFT);
+                return str_pad($value->getHex(), 64, '0', STR_PAD_LEFT);
 
             case 'address':
-                $value = Hex::cleanPrefix($value);
-                if (strlen($value) !== 40) {
+                if (strlen($value->getHex()) !== 40) {
                     throw new \Exception("Address must be 40 chars");
                 }
 
-                return str_pad($value, 64, '0', STR_PAD_LEFT);
+                return str_pad($value->getHex(), 64, '0', STR_PAD_LEFT);
 
             case 'bool':
-                $value = $value ? "1" : "0";
-
-                return str_pad($value, 64, '0', STR_PAD_LEFT);
+                return str_pad($value->getHex(), 64, '0', STR_PAD_LEFT);
 
             case 'bytes32':
-                $value = Hex::cleanPrefix($value);
-                if (strlen($value) != 64) {
+                if (strlen($value->getHex()) != 64) {
                     throw new \Exception("bytes32 must be 64 chars");
                 }
 
-                return str_pad($value, 64, '0', STR_PAD_LEFT);
+                return str_pad($value->getHex(), 64, '0', STR_PAD_LEFT);
 
             default:
                 throw new \Exception("Unknown input type {$type}");
@@ -209,28 +206,34 @@ class SmartContract
         }
     }
 
+    /**
+     * @param $type
+     * @param $raw
+     * @return Buffer|bool|string
+     * @throws \Exception
+     */
     protected function decodeParam($type, &$raw)
     {
         switch ($type) {
 
             case 'uint8':
             case 'uint256':
-                $result = hexdec(substr($raw, 0, 64));
+                $result = Buffer::hex(substr($raw, 0, 64));
                 $raw = substr($raw, 64);
                 break;
 
             case 'address':
-                $result = substr($raw, 64-40, 40);
+                $result = Buffer::hex(substr($raw, 64-40, 40));
                 $raw = substr($raw, 64);
                 break;
 
             case 'bool':
-                $result = hexdec(substr($raw, 0, 64)) ? true : false;
+                $result = Buffer::hex(substr($raw, 0, 64))->getInt() ? true : false;
                 $raw = substr($raw, 64);
                 break;
 
             case 'bytes32':
-                $result = substr($raw, 0, 64);
+                $result = Buffer::hex(substr($raw, 0, 64));
                 $raw = substr($raw, 64);
                 break;
 
@@ -242,6 +245,10 @@ class SmartContract
 
     }
 
+    /**
+     * @param array $abiRaw
+     * @return Buffer
+     */
     protected function getPrototype(array $abiRaw)
     {
         $types = [];
@@ -249,7 +256,7 @@ class SmartContract
             $types[] = $input['type'];
         }
 
-        $prototype = sprintf('%s(%s)', $abiRaw['name'], implode(',', $types));
+        $prototype = new Buffer(sprintf('%s(%s)', $abiRaw['name'], implode(',', $types)));
 
         return Keccak::hash($prototype, 256);
     }

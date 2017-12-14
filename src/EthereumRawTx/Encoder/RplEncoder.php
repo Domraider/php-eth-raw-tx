@@ -1,7 +1,7 @@
 <?php
 namespace EthereumRawTx\Encoder;
 
-use EthereumRawTx\Tool\Hex;
+use BitWasp\Buffertools\Buffer;
 
 /**
  * Class RplEncoder
@@ -11,25 +11,29 @@ use EthereumRawTx\Tool\Hex;
 class RplEncoder
 {
 
+    /**
+     * @param array|string|Buffer $input
+     * @return Buffer
+     */
     static function encode($input)
     {
-        if (is_string($input)) {
-            if($input === hex2bin("00")) {
-                return chr(128);
+        if ($input instanceof Buffer) {
+            if($input->getBinary() === Buffer::hex("00")->getBinary()) {
+                return new Buffer(chr(128));
             }
-            if (strlen($input) == 1 && ord($input) < 128){
+            if (strlen($input->getBinary()) == 1 && ord($input->getBinary()) < 128){
                 return $input;
             }
-
-            return self::encodeLength(strlen($input), 128) . $input;
+            return new Buffer(self::encodeLength(strlen($input->getBinary()), 128) . $input->getBinary());
         }
         if (is_array($input)) {
             $output = '';
             foreach ($input as $item) {
-                $output .= self::encode($item);
+                $encode = self::encode($item);
+                $output .= $encode->getBinary();
             }
 
-            return self::encodeLength(strlen($output), 192) . $output;
+            return new Buffer(self::encodeLength(strlen($output), 192) . $output);
         }
     }
 
@@ -38,7 +42,7 @@ class RplEncoder
         if ($l < 56) {
             return chr($l + $offset);
         } elseif ($l < 256 ** 8) {
-            $bl = hex2bin(Hex::fromDec($l));
+            $bl = Buffer::int($l)->getBinary();
             return chr(strlen($bl) + $offset + 55) . $bl;
         } else {
             throw new \Exception('Failed to encode length');
