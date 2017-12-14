@@ -4,51 +4,103 @@ namespace EthereumRawTx;
 use EthereumRawTx\Encoder\Keccak;
 use EthereumRawTx\Encoder\RplEncoder;
 use EthereumRawTx\Tool\Hex;
+use BitWasp\Buffertools\Buffer;
+
 
 class Transaction
 {
+    /**
+     * @var Buffer $chainId
+     */
     protected $chainId;
 
+    /**
+     * @var Buffer $nonce
+     */
     protected $nonce;
+
+    /**
+     * @var Buffer $gasPrice
+     */
     protected $gasPrice;
+
+    /**
+     * @var Buffer $gasLimit
+     */
     protected $gasLimit;
+
+    /**
+     * @var String $to
+     */
     protected $to;
+
+    /**
+     * @var Buffer $value
+     */
     protected $value;
+
+    /**
+     * @var String $data
+     */
     protected $data;
 
+    /**
+     * @var String|null $v
+     */
     protected $v;
+
+    /**
+     * @var String|null $r
+     */
     protected $r;
+
+    /**
+     * @var String|null $s
+     */
     protected $s;
 
-    public function __construct(string $to = null, int $value = null, string $data = null, int $nonce = 1, int $gasPrice = 10000000000000, int $gasLimit = 196608)
+    /**
+     * Transaction constructor.
+     * @param Buffer|null $to
+     * @param Buffer|null $value
+     * @param Buffer|null $data
+     * @param Buffer|null $nonce
+     * @param Buffer|null $gasPrice
+     * @param Buffer|null $gasLimit
+     */
+    public function __construct(Buffer $to = null, Buffer $value = null, Buffer $data = null, Buffer $nonce = null, Buffer $gasPrice = null, Buffer $gasLimit = null)
     {
-        $this->nonce = Hex::fromDec($nonce);
-        $this->gasPrice = Hex::fromDec($gasPrice);
-        $this->gasLimit = Hex::fromDec($gasLimit);
-        $this->to = $to ?? '';
-        $this->value = null === $value ? '' : Hex::fromDec($value);
-        $this->data = $data ?? '';
+
+        $this->nonce = null === $nonce ? Buffer::int('1') : $nonce;
+        $this->gasPrice = null === $gasPrice ? Buffer::int('10000000000000') : $gasPrice;
+        $this->gasLimit = null === $gasLimit ? Buffer::int('196608') : $gasLimit;
+        $this->to = $to ?? new Buffer();
+        $this->value = null === $value ? Buffer::int('0') : $value;
+        $this->data = $data ??  new Buffer();
     }
 
     /**
-     * @param string $privateKey
-     * @param int|null $chainId (1 => mainet, 3 => robsten, 4 => rinkeby
-     * @return string
+     * @param Buffer $privateKey
+     * @param Buffer $chainId (1 => mainet, 3 => robsten, 4 => rinkeby
+     * @return Buffer
      */
-    public function getRaw(string $privateKey, int $chainId = 1)
+    public function getRaw(Buffer $privateKey, Buffer $chainId = null)
     {
-        $this->chainId = Hex::fromDec($chainId);
+        $this->chainId = null === $chainId ? Buffer::int('1') : $chainId;
 
-        $this->v = null;
-        $this->r = null;
-        $this->s = null;
+        $this->v = new Buffer();
+        $this->r = new Buffer();
+        $this->s = new Buffer();
 
         $this->sign($privateKey);
 
-        return bin2hex($this->serialize());
+        return $this->serialize();
     }
 
-    protected function getInput()
+    /**
+     * @return array
+     */
+    public function getInput()
     {
         return [
             "nonce" => $this->nonce,
@@ -63,22 +115,23 @@ class Transaction
         ];
     }
 
-    protected function sign($pk)
+    /**
+     * @param Buffer $privateKey
+     * @throws \Exception
+     */
+    protected function sign(Buffer $privateKey)
     {
         $hash = $this->hash();
 
         $context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
 
-        $msg32 = hex2bin($hash);
-        $privateKey = pack("H*", $pk);
-
-        if (!$privateKey) {
+        if (strlen($privateKey->getHex()) != 64) {
             throw new \Exception("Incorrect private key");
         }
 
         /** @var resource $signature */
         $signature = '';
-        if (secp256k1_ecdsa_sign_recoverable($context, $signature, $msg32, $privateKey) != 1) {
+        if (secp256k1_ecdsa_sign_recoverable($context, $signature, $hash->getBinary(), $privateKey->getBinary()) != 1) {
             throw new \Exception("Failed to create signature");
         }
 
@@ -86,28 +139,29 @@ class Transaction
         $recId = 0;
         secp256k1_ecdsa_recoverable_signature_serialize_compact($context, $signature, $serialized, $recId);
 
-        $hexsign = bin2hex($serialized);
+        $sign = new Buffer($serialized);
 
-        $this->r = Hex::trim(substr($hexsign, 0, 64));
-        $this->s = Hex::trim(substr($hexsign, 64));
-        $this->v = Hex::fromDec($recId + 27 + hexdec($this->chainId) * 2 + 8);
+        $this->r = Buffer::hex(Hex::trim(substr($sign->getHex(), 0, 64)));
+        $this->s = Buffer::hex(Hex::trim(substr($sign->getHex(), 64)));
+        $this->v = Buffer::int($recId + 27 + $this->chainId->getInt() * 2 + 8);
     }
 
+    /**
+     * @return Buffer
+     */
     protected function hash()
     {
         $raw = $this->getInput();
 
-        if (hexdec($this->chainId) > 0) {
+        if ($this->chainId->getInt() > 0) {
             $raw['v'] = $this->chainId;
-            $raw['r'] = "";
-            $raw['s'] = "";
+            $raw['r'] = new Buffer();
+            $raw['s'] = new Buffer();
         } else {
             unset($raw['v']);
             unset($raw['r']);
             unset($raw['s']);
         }
-
-        $raw = array_map('hex2bin', $raw);
 
         // create hash
         $hash = RplEncoder::encode($raw);
@@ -116,10 +170,12 @@ class Transaction
         return $shaed;
     }
 
+    /**
+     * @return Buffer
+     */
     protected function serialize()
     {
         $raw = $this->getInput();
-        $raw = array_map('hex2bin', $raw);
 
         return RplEncoder::encode($raw);
     }

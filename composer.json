@@ -3,7 +3,8 @@
     "description": "PHP tool for creating Ethereum raw transactions",
     "type": "library",
     "require": {
-        "bitwasp/secp256k1-php": "^0.1.2"
+        "bitwasp/secp256k1-php": "^0.1.2",
+        "bitwasp/buffertools": "^0.4.1"
     },
     "license": "MIT",
     "authors": [

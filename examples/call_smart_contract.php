@@ -10,4 +10,4 @@ $sc = new \EthereumRawTx\SmartContract($smartContractBinaries, $smartContractAbi
 $raw = $sc->getMethodBin("getCurrentAmounts");
 
 echo "Generated raw transaction :" . PHP_EOL;
-echo $raw . PHP_EOL;
+echo $raw->getHex() . PHP_EOL;
