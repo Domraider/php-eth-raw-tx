@@ -77,6 +77,10 @@ class SmartContract
         return $values;
     }
 
+    public function getEvents(): array
+    {
+        return $this->abi[self::ABI_TYPE_EVENT] ?? [];
+    }
 
     protected function parseInputs(array $abiInputs, array $values)
     {
