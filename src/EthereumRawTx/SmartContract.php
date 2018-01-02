@@ -14,21 +14,39 @@ class SmartContract
     protected $bin;
     protected $abi;
 
-    public function __construct($bin, $abi)
+    /**
+     * SmartContract constructor.
+     * @param string $bin
+     * @param string $abi
+     * @throws \Exception
+     */
+    public function __construct(string $bin, string $abi)
     {
-        // todo : check data ?
-        // abi must be json
+        if(!is_array(json_decode($abi, true))) {
+            throw new \Exception("Abi must be an Json");
+        }
 
-        $this->bin = $bin;
+        $this->bin = Hex::cleanPrefix($bin);
         $this->abi = $this->parseAbi(json_decode($abi, true));
     }
 
-    public function getConstructBin(array $args = [])
+    /**
+     * @param array $args
+     * @return Buffer
+     * @throws \Exception
+     */
+    public function getConstructBin(array $args = []) :Buffer
     {
         return Buffer::hex($this->bin . $this->parseInputs($this->abi[self::ABI_TYPE_CONSTRUCTOR]['inputs'], $args));
     }
 
-    public function getMethodBin($method, array $args = [])
+    /**
+     * @param string $method
+     * @param array $args
+     * @return Buffer
+     * @throws \Exception
+     */
+    public function getMethodBin(string $method, array $args = []): Buffer
     {
         if (!isset($this->abi[self::ABI_TYPE_FUNCTION][$method])) {
             throw new \Exception("Method does not exists in abi");
@@ -37,7 +55,12 @@ class SmartContract
         return Buffer::hex(substr($this->abi[self::ABI_TYPE_FUNCTION][$method]['prototype'], 0, 8) . $this->parseInputs($this->abi[self::ABI_TYPE_FUNCTION][$method]['inputs'], $args));
     }
 
-    public function getEventBin($event)
+    /**
+     * @param string $event
+     * @return Buffer
+     * @throws \Exception
+     */
+    public function getEventBin(string $event): Buffer
     {
         if (!isset($this->abi[self::ABI_TYPE_EVENT][$event])) {
             throw new \Exception("Method does not exists in abi");
@@ -45,7 +68,13 @@ class SmartContract
         return Buffer::hex($this->abi[self::ABI_TYPE_EVENT][$event]['prototype']);
     }
 
-    public function decodeMethodResponse($method, $raw)
+    /**
+     * @param string $method
+     * @param string $raw
+     * @return array
+     * @throws \Exception
+     */
+    public function decodeMethodResponse(string $method, string $raw): array
     {
         if (!isset($this->abi[self::ABI_TYPE_FUNCTION][$method])) {
             throw new \Exception("Method does not exists in abi");
@@ -56,19 +85,26 @@ class SmartContract
         return $this->parseOutputs($this->abi[self::ABI_TYPE_FUNCTION][$method]['outputs'], $raw);
     }
 
-    public function decodeEventResponse(array $values)
+    /**
+     * @param array $values
+     * @return array
+     * @throws \Exception
+     */
+    public function decodeEventResponse(array $values): array
     {
         // If topics does not set , return $values
         if (!isset($values['topics']) || !isset($values['topics'][0])) {
             return $values;
         }
 
+        /** @var Buffer $topic */
         $topic = Hex::cleanPrefix($values['topics'][0]);
 
         if(!isset($this->abi['prototype'][$topic])) {
             throw new \Exception("Event does not exists in abi");
         }
 
+        /** @var string $event */
         $event = $this->abi['prototype'][$topic];
 
         $values['eventName'] = $event;
@@ -78,15 +114,25 @@ class SmartContract
         return $values;
     }
 
+    /**
+     * @return array
+     */
     public function getEvents(): array
     {
         return $this->abi[self::ABI_TYPE_EVENT] ?? [];
     }
 
-    protected function parseInputs(array $abiInputs, array $values)
+    /**
+     * @param array $abiInputs
+     * @param array $values
+     * @return string
+     * @throws \Exception
+     */
+    protected function parseInputs(array $abiInputs, array $values): string
     {
         $values = array_values($values);
 
+        /** @var string $result */
         $result = '';
 
         // check $args match expected ones
@@ -95,6 +141,7 @@ class SmartContract
         }
 
         foreach ($abiInputs as $i => $input) {
+            /** @var string $type */
             $type = $input['type'];
 
             $result .= $this->encodeParam($type, $values[$i]);
@@ -103,8 +150,15 @@ class SmartContract
         return $result;
     }
 
-    protected function parseOutputs(array $abiOutputs, $raw)
+    /**
+     * @param array $abiOutputs
+     * @param string $raw
+     * @return array
+     * @throws \Exception
+     */
+    protected function parseOutputs(array $abiOutputs, string $raw): array
     {
+        /** @var array $result */
         $result = [];
 
         foreach ($abiOutputs as $i => $output) {
@@ -116,8 +170,13 @@ class SmartContract
         return $result;
     }
 
-    protected function parseAbi(array $abi)
+    /**
+     * @param array $abi
+     * @return array
+     */
+    protected function parseAbi(array $abi): array
     {
+        /** @var array $return */
         $return = [];
 
         foreach($abi as $abiRaw)
@@ -152,7 +211,7 @@ class SmartContract
      * @return string
      * @throws \Exception
      */
-    protected function encodeParam($type, $value)
+    protected function encodeParam(string $type, $value): string
     {
         // Detect and format an array type
         preg_match('/([a-zA-Z0-9]*)(\[([0-9]+)\])?/',$type,$match);
@@ -162,6 +221,7 @@ class SmartContract
                 throw new \Exception("Value count does not match expected type");
             }
 
+            /** @var string $return */
             $return = '';
             foreach($value as $key => $val) {
                 $return.= $this->encodeParam($match[1],$val);
@@ -207,12 +267,12 @@ class SmartContract
     }
 
     /**
-     * @param $type
-     * @param $raw
-     * @return Buffer|bool|string
+     * @param string $type
+     * @param string $raw
+     * @return Buffer|bool
      * @throws \Exception
      */
-    protected function decodeParam($type, &$raw)
+    protected function decodeParam(string $type, string &$raw)
     {
         switch ($type) {
 
@@ -249,13 +309,15 @@ class SmartContract
      * @param array $abiRaw
      * @return Buffer
      */
-    protected function getPrototype(array $abiRaw)
+    protected function getPrototype(array $abiRaw): Buffer
     {
+        /** @var array $types */
         $types = [];
         foreach ($abiRaw['inputs'] as $input) {
             $types[] = $input['type'];
         }
 
+        /** @var Buffer $prototype */
         $prototype = new Buffer(sprintf('%s(%s)', $abiRaw['name'], implode(',', $types)));
 
         return Keccak::hash($prototype, 256);

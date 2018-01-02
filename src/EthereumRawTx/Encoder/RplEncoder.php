@@ -14,8 +14,9 @@ class RplEncoder
     /**
      * @param array|string|Buffer $input
      * @return Buffer
+     * @throws \Exception
      */
-    static function encode($input)
+    static function encode($input): Buffer
     {
         if ($input instanceof Buffer) {
             if($input->getBinary() === Buffer::hex("00")->getBinary()) {
@@ -27,6 +28,7 @@ class RplEncoder
             return new Buffer(self::encodeLength(strlen($input->getBinary()), 128) . $input->getBinary());
         }
         if (is_array($input)) {
+            /** @var string $output */
             $output = '';
             foreach ($input as $item) {
                 $encode = self::encode($item);
@@ -37,11 +39,18 @@ class RplEncoder
         }
     }
 
-    static function encodeLength($l, $offset)
+    /**
+     * @param int $l
+     * @param int $offset
+     * @return string
+     * @throws \Exception
+     */
+    static function encodeLength(int $l, int $offset): string
     {
         if ($l < 56) {
             return chr($l + $offset);
-        } elseif ($l < 256 ** 8) {
+        } elseif ($l <256 ** 8) {
+            /** @var string $bl */
             $bl = Buffer::int($l)->getBinary();
             return chr(strlen($bl) + $offset + 55) . $bl;
         } else {
