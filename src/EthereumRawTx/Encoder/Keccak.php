@@ -5,8 +5,15 @@ use BitWasp\Buffertools\Buffer;
 
 class Keccak
 {
-    static function hash(Buffer $a, $bits = 256)
+    /**
+     * @param Buffer $a
+     * @param int $bits
+     * @return Buffer
+     * @throws \Exception
+     */
+    static function hash(Buffer $a, int $bits = 256): Buffer
     {
+        /** @var string $sha */
         $sha = exec(sprintf(
             'echo "%s"  | keccak-%dsum -x -l',
             $a->getHex(),

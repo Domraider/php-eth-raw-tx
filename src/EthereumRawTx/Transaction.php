@@ -81,10 +81,11 @@ class Transaction
 
     /**
      * @param Buffer $privateKey
-     * @param Buffer $chainId (1 => mainet, 3 => robsten, 4 => rinkeby
+     * @param Buffer $chainId (1 => mainet, 3 => robsten, 4 => rinkeby)
      * @return Buffer
+     * @throws \Exception
      */
-    public function getRaw(Buffer $privateKey, Buffer $chainId = null)
+    public function getRaw(Buffer $privateKey, Buffer $chainId = null): Buffer
     {
         $this->chainId = null === $chainId ? Buffer::int('1') : $chainId;
 
@@ -100,7 +101,7 @@ class Transaction
     /**
      * @return array
      */
-    public function getInput()
+    public function getInput(): array
     {
         return [
             "nonce" => $this->nonce,
@@ -121,8 +122,10 @@ class Transaction
      */
     protected function sign(Buffer $privateKey)
     {
+        /** @var Buffer $hash */
         $hash = $this->hash();
 
+        /** @var resource $context */
         $context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
 
         if (strlen($privateKey->getHex()) != 64) {
@@ -135,7 +138,9 @@ class Transaction
             throw new \Exception("Failed to create signature");
         }
 
+        /** @var string $serialized */
         $serialized = '';
+        /** @var int $recId */
         $recId = 0;
         secp256k1_ecdsa_recoverable_signature_serialize_compact($context, $signature, $serialized, $recId);
 
@@ -149,8 +154,9 @@ class Transaction
     /**
      * @return Buffer
      */
-    protected function hash()
+    protected function hash(): Buffer
     {
+        /** @var array $raw */
         $raw = $this->getInput();
 
         if ($this->chainId->getInt() > 0) {
@@ -163,8 +169,9 @@ class Transaction
             unset($raw['s']);
         }
 
-        // create hash
+        /** @var Buffer $hash */
         $hash = RplEncoder::encode($raw);
+        /** @var Buffer $shaed */
         $shaed = Keccak::hash($hash);
 
         return $shaed;
@@ -173,8 +180,9 @@ class Transaction
     /**
      * @return Buffer
      */
-    protected function serialize()
+    protected function serialize(): Buffer
     {
+        /** @var array $raw */
         $raw = $this->getInput();
 
         return RplEncoder::encode($raw);
