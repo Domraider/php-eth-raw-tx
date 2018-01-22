@@ -97,8 +97,17 @@ class SmartContract
             return $values;
         }
 
-        /** @var Buffer $topic */
-        $topic = Hex::cleanPrefix($values['topics'][0]);
+        /** @var string $topic */
+        /** @var array $topics */
+        $topics = [];
+        for($i = 0; $i < count($values['topics']); $i++) {
+            if($i == 0){
+                $topic = Hex::cleanPrefix($values['topics'][$i]);
+            }
+            else {
+                array_push($topics, Hex::cleanPrefix($values['topics'][$i]));
+            }
+        }
 
         if(!isset($this->abi['prototype'][$topic])) {
             throw new \Exception("Event does not exists in abi");
@@ -108,7 +117,7 @@ class SmartContract
         $event = $this->abi['prototype'][$topic];
 
         $values['eventName'] = $event;
-        $values['data'] = $this->parseOutputs($this->abi[self::ABI_TYPE_EVENT][$event]['inputs'], Hex::cleanPrefix($values['data']));
+        $values['data'] = $this->parseOutputs($this->abi[self::ABI_TYPE_EVENT][$event]['inputs'], Hex::cleanPrefix($values['data']), $topics);
 
 
         return $values;
@@ -153,10 +162,11 @@ class SmartContract
     /**
      * @param array $abiOutputs
      * @param string $raw
+     * @param array $topicIndexed
      * @return array
      * @throws \Exception
      */
-    protected function parseOutputs(array $abiOutputs, string $raw): array
+    protected function parseOutputs(array $abiOutputs, string $raw, array $topicIndexed = []): array
     {
         /** @var array $result */
         $result = [];
@@ -164,7 +174,18 @@ class SmartContract
         foreach ($abiOutputs as $i => $output) {
             $type = $output['type'];
 
-            $result [$output['name']] = $this->decodeParam($type, $raw);
+            if(isset($output['indexed']) && $output['indexed'] === true) {
+                if(count($topicIndexed) == 0) {
+                    throw new \Exception("Value indexed not found in topic");
+                }
+                $topicRaw = array_shift($topicIndexed);
+                $result [$output['name']] = $this->decodeParam($type, $topicRaw);
+            }
+            else {
+                $result [$output['name']] = $this->decodeParam($type, $raw);
+            }
+
+
         }
 
         return $result;
@@ -173,6 +194,7 @@ class SmartContract
     /**
      * @param array $abi
      * @return array
+     * @throws \Exception
      */
     protected function parseAbi(array $abi): array
     {
@@ -308,6 +330,7 @@ class SmartContract
     /**
      * @param array $abiRaw
      * @return Buffer
+     * @throws \Exception
      */
     protected function getPrototype(array $abiRaw): Buffer
     {
