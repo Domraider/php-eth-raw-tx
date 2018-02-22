@@ -33,13 +33,13 @@ describe("Smart contract ", function () {
         });
         it("Smart contract with params constructor", function () {
             expect($this->sc->getConstructBin([
-                \BitWasp\Buffertools\Buffer::int(12345),
-                \BitWasp\Buffertools\Buffer::int(9787),
+                EthereumRawTx\Encoder\BufferNumber::uint(12345),
+                EthereumRawTx\Encoder\BufferNumber::int(-9787),
                 \BitWasp\Buffertools\Buffer::int(1),
             ])->getHex())->to->equal(
                 $this->bin
                 . "0000000000000000000000000000000000000000000000000000000000003039"
-                . "000000000000000000000000000000000000000000000000000000000000263b"
+                . "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd9c5"
                 . "0000000000000000000000000000000000000000000000000000000000000001"
             );
         });
@@ -82,6 +82,7 @@ describe("Smart contract ", function () {
             expect($reponseData['eventName'])->to->equal('Event1');
             expect($reponseData['data']['u']->getInt())->to->equal("1");
             expect($reponseData['data']['i']->getHex())->to->equal("fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe");
+            expect($reponseData['data']['i']->getInt())->to->equal("-2");
             expect($reponseData['data']['i84'])->to->be->an('array');
             expect($reponseData['data']['i84'][0]->getInt())->to->equal("1");
             expect($reponseData['data']['i84'][1]->getInt())->to->equal("2");
@@ -110,8 +111,8 @@ describe("Smart contract ", function () {
 
         // io(uint256,bool)
         $bin = $this->sc->getFunctionBin('51ab7bc5', [
-            \BitWasp\Buffertools\Buffer::int(123),
-            \BitWasp\Buffertools\Buffer::int(1),
+            EthereumRawTx\Encoder\BufferNumber::uint256('123'),
+            BitWasp\Buffertools\Buffer::int(1),
         ]);
         expect($bin->getHex())->to->equal('51ab7bc5000000000000000000000000000000000000000000000000000000000000007b0000000000000000000000000000000000000000000000000000000000000001');
     });

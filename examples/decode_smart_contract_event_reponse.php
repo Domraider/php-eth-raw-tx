@@ -12,4 +12,11 @@ $responseRaw = json_decode('{"address":"0x31b83a851eb7112448d4837a071acabd83531f
 $raw = $sc->decodeEventResponse($responseRaw);
 
 echo "Parsed response :" . PHP_EOL;
-var_dump($raw);
+echo "TransactionHash : " . $raw['transactionHash'] . PHP_EOL;
+echo "Address : " . $raw['address'] . PHP_EOL;
+echo "Address : " . $raw['address'] . PHP_EOL;
+echo "Topcis : " . $raw['topics'][0] . PHP_EOL;
+echo "EventName : " . $raw['eventName'] . PHP_EOL;
+echo "Data amount : " . $raw['data']['amount']->getInt() . PHP_EOL;
+echo "Data _minimal : " . $raw['data']['_minimal']->getInt() . PHP_EOL;
+echo "Data origin : " . $raw['data']['origin']->getHex() . PHP_EOL;

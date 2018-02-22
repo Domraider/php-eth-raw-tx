@@ -20,7 +20,12 @@ $time = time();
 $tx = new \EthereumRawTx\Transaction(
     null,
     null,
-    $sc->getConstructBin([\BitWasp\Buffertools\Buffer::int(5), \BitWasp\Buffertools\Buffer::int($time), \BitWasp\Buffertools\Buffer::int($time + 86400)]),
+    $sc->getConstructBin(
+        [
+            EthereumRawTx\Encoder\BufferNumber::uint256(5),
+            EthereumRawTx\Encoder\BufferNumber::uint256($time),
+            EthereumRawTx\Encoder\BufferNumber::uint256($time + 86400)
+        ]),
     $nonce,
     \BitWasp\Buffertools\Buffer::int(40000000000),
     \BitWasp\Buffertools\Buffer::int(1000000)

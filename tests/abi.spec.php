@@ -264,7 +264,7 @@ describe("Abi", function () {
                     $parsed = $param->decode('0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000002200000000000000000000000000000000000000000000000000000000000002220000000000000000000000000000000000000000000000000000000000002222');
                     expect($parsed)->to->be->an('array');
                     foreach ($parsed as $p) {
-                        expect($p)->to->instanceof(\BitWasp\Buffertools\Buffer::class);
+                        expect($p)->to->instanceof(\EthereumRawTx\Encoder\BufferNumber::class);
                     }
                     expect($parsed[0]->getInt())->to->equal("2");
                     expect($parsed[1]->getInt())->to->equal("34");
@@ -277,7 +277,7 @@ describe("Abi", function () {
                     $parsed = $param->decode('00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000022');
                     expect($parsed)->to->be->an('array');
                     foreach ($parsed as $p) {
-                        expect($p)->to->instanceof(\BitWasp\Buffertools\Buffer::class);
+                        expect($p)->to->instanceof(\EthereumRawTx\Encoder\BufferNumber::class);
                     }
                     expect($parsed[0]->getInt())->to->equal("2");
                     expect($parsed[1]->getInt())->to->equal("34");
@@ -319,22 +319,22 @@ describe("Abi", function () {
                     expect($parsed[1]->getInt())->to->equal("2");
                     expect($parsed[2]->getInt())->to->equal("3");
                 });
-                it('of uint16', function(){
-                    $param = new \EthereumRawTx\Abi\ParamType('uint16[]');
+                it('of int16', function(){
+                    $param = new \EthereumRawTx\Abi\ParamType('int16[]');
 
                     $parsed = $param->decode(
                         "0000000000000000000000000000000000000000000000000000000000000020" // position of length
                         . "0000000000000000000000000000000000000000000000000000000000000003" // length
                         . "0000000000000000000000000000000000000000000000000000000000000001"
                         . "0000000000000000000000000000000000000000000000000000000000000002"
-                        . "0000000000000000000000000000000000000000000000000000000000000003"
+                        . "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffd"
                     );
 
                     expect($parsed)->to->be->an('array');
                     expect(count($parsed))->to->equal(3);
                     expect($parsed[0]->getInt())->to->equal("1");
                     expect($parsed[1]->getInt())->to->equal("2");
-                    expect($parsed[2]->getInt())->to->equal("3");
+                    expect($parsed[2]->getInt())->to->equal("-3");
                 });
                 it('of string', function () {
                     // todo
@@ -365,30 +365,42 @@ describe("Abi", function () {
             it('parse from uint', function () {
                 $param = new \EthereumRawTx\Abi\ParamType('uint');
 
-                $parsed = $param->encode(\BitWasp\Buffertools\Buffer::int(10));
+                $parsed = $param->encode(EthereumRawTx\Encoder\BufferNumber::uint256(10));
 
                 expect($parsed)->to->equal('000000000000000000000000000000000000000000000000000000000000000a');
             });
             it('parse from uint8', function () {
                 $param = new \EthereumRawTx\Abi\ParamType('uint8');
 
-                $parsed = $param->encode(\BitWasp\Buffertools\Buffer::int(10));
+                $parsed = $param->encode(EthereumRawTx\Encoder\BufferNumber::uint8(10));
 
                 expect($parsed)->to->equal('000000000000000000000000000000000000000000000000000000000000000a');
             });
             it('parse from int', function () {
                 $param = new \EthereumRawTx\Abi\ParamType('int');
 
-                $parsed = $param->encode(\BitWasp\Buffertools\Buffer::int(10));
+                $parsed = $param->encode(EthereumRawTx\Encoder\BufferNumber::int(10));
 
                 expect($parsed)->to->equal('000000000000000000000000000000000000000000000000000000000000000a');
+
+                $param = new \EthereumRawTx\Abi\ParamType('int');
+
+                $parsed = $param->encode(EthereumRawTx\Encoder\BufferNumber::int(-10));
+
+                expect($parsed)->to->equal('fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff6');
             });
             it('parse fixed-length int', function () {
                 $param = new \EthereumRawTx\Abi\ParamType('int32');
 
-                $parsed = $param->encode(\BitWasp\Buffertools\Buffer::int(10));
+                $parsed = $param->encode(EthereumRawTx\Encoder\BufferNumber::int32(10));
 
                 expect($parsed)->to->equal('000000000000000000000000000000000000000000000000000000000000000a');
+
+                $param = new \EthereumRawTx\Abi\ParamType('int32');
+
+                $parsed = $param->encode(EthereumRawTx\Encoder\BufferNumber::int32(-10));
+
+                expect($parsed)->to->equal('00000000000000000000000000000000000000000000000000000000fffffff6');
             });
             it('parse bool', function () {
                 $param = new \EthereumRawTx\Abi\ParamType('bool');
@@ -449,10 +461,10 @@ describe("Abi", function () {
                     $param = new \EthereumRawTx\Abi\ParamType('uint[4]');
 
                     $parsed = $param->encode([
-                        \BitWasp\Buffertools\Buffer::int(2),
-                        \BitWasp\Buffertools\Buffer::int(52),
-                        \BitWasp\Buffertools\Buffer::int(1350),
-                        \BitWasp\Buffertools\Buffer::int(34616),
+                        EthereumRawTx\Encoder\BufferNumber::uint(2),
+                        EthereumRawTx\Encoder\BufferNumber::uint(52),
+                        EthereumRawTx\Encoder\BufferNumber::uint(1350),
+                        EthereumRawTx\Encoder\BufferNumber::uint(34616),
                     ]);
 
                     expect(implode("", $parsed))->to->equal('0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000003400000000000000000000000000000000000000000000000000000000000005460000000000000000000000000000000000000000000000000000000000008738');
@@ -461,10 +473,10 @@ describe("Abi", function () {
                     $param = new \EthereumRawTx\Abi\ParamType('uint32[4]');
 
                     $parsed = $param->encode([
-                        \BitWasp\Buffertools\Buffer::int(2),
-                        \BitWasp\Buffertools\Buffer::int(52),
-                        \BitWasp\Buffertools\Buffer::int(1350),
-                        \BitWasp\Buffertools\Buffer::int(34616),
+                        EthereumRawTx\Encoder\BufferNumber::uint32(2),
+                        EthereumRawTx\Encoder\BufferNumber::uint32(52),
+                        EthereumRawTx\Encoder\BufferNumber::uint32(1350),
+                        EthereumRawTx\Encoder\BufferNumber::uint32(34616),
                     ]);
 
                     expect(implode("", $parsed))->to->equal('0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000003400000000000000000000000000000000000000000000000000000000000005460000000000000000000000000000000000000000000000000000000000008738');
@@ -491,9 +503,9 @@ describe("Abi", function () {
                     $param = new \EthereumRawTx\Abi\ParamType('uint[]');
 
                     $parsed = $param->encode([
-                        \BitWasp\Buffertools\Buffer::int(1),
-                        \BitWasp\Buffertools\Buffer::int(2),
-                        \BitWasp\Buffertools\Buffer::int(3),
+                        EthereumRawTx\Encoder\BufferNumber::uint(1),
+                        EthereumRawTx\Encoder\BufferNumber::uint(2),
+                        EthereumRawTx\Encoder\BufferNumber::uint(3),
                     ]);
 
                     expect(implode('', $parsed))->to->equal(
@@ -507,9 +519,9 @@ describe("Abi", function () {
                     $param = new \EthereumRawTx\Abi\ParamType('uint32[]');
 
                     $parsed = $param->encode([
-                        \BitWasp\Buffertools\Buffer::int(1),
-                        \BitWasp\Buffertools\Buffer::int(2),
-                        \BitWasp\Buffertools\Buffer::int(3),
+                        EthereumRawTx\Encoder\BufferNumber::uint32(1),
+                        EthereumRawTx\Encoder\BufferNumber::uint32(2),
+                        EthereumRawTx\Encoder\BufferNumber::uint32(3),
                     ]);
 
                     expect(implode('', $parsed))->to->equal(
@@ -517,6 +529,38 @@ describe("Abi", function () {
                         . "0000000000000000000000000000000000000000000000000000000000000001"
                         . "0000000000000000000000000000000000000000000000000000000000000002"
                         . "0000000000000000000000000000000000000000000000000000000000000003"
+                    );
+                });
+                it('of int', function () {
+                    $param = new \EthereumRawTx\Abi\ParamType('int[]');
+
+                    $parsed = $param->encode([
+                        EthereumRawTx\Encoder\BufferNumber::int(1),
+                        EthereumRawTx\Encoder\BufferNumber::int(-1),
+                        EthereumRawTx\Encoder\BufferNumber::int(-2),
+                    ]);
+
+                    expect(implode('', $parsed))->to->equal(
+                        "0000000000000000000000000000000000000000000000000000000000000003" // count
+                        . "0000000000000000000000000000000000000000000000000000000000000001"
+                        . "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"
+                        . "fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffe"
+                    );
+                });
+                it('of int32', function () {
+                    $param = new \EthereumRawTx\Abi\ParamType('int32[]');
+
+                    $parsed = $param->encode([
+                        EthereumRawTx\Encoder\BufferNumber::int32(1),
+                        EthereumRawTx\Encoder\BufferNumber::int32(-1),
+                        EthereumRawTx\Encoder\BufferNumber::int32(-2),
+                    ]);
+
+                    expect(implode('', $parsed))->to->equal(
+                        "0000000000000000000000000000000000000000000000000000000000000003" // count
+                        . "0000000000000000000000000000000000000000000000000000000000000001"
+                        . "00000000000000000000000000000000000000000000000000000000ffffffff"
+                        . "00000000000000000000000000000000000000000000000000000000fffffffe"
                     );
                 });
                 it('of string', function () {
@@ -809,12 +853,12 @@ describe("Abi", function () {
                                 'type' => 'uint8',
                             ],
                             [
-                                'name' => 'four_uint',
-                                'type' => 'uint[4]',
+                                'name' => 'four_int',
+                                'type' => 'int[4]',
                             ],
                             [
-                                'name' => 'dynamic_uint',
-                                'type' => 'uint[]',
+                                'name' => 'dynamic_int',
+                                'type' => 'int[]',
                             ],
                             [
                                 'name' => '2_string',
@@ -838,17 +882,17 @@ describe("Abi", function () {
                     };
 
                     $hex = $item->inputsToHex([
-                        \BitWasp\Buffertools\Buffer::int(5),
+                        EthereumRawTx\Encoder\BufferNumber::uint8(5),
                         [
-                            \BitWasp\Buffertools\Buffer::int(11),
-                            \BitWasp\Buffertools\Buffer::int(12),
-                            \BitWasp\Buffertools\Buffer::int(13),
-                            \BitWasp\Buffertools\Buffer::int(14),
+                            EthereumRawTx\Encoder\BufferNumber::int(11),
+                            EthereumRawTx\Encoder\BufferNumber::int(12),
+                            EthereumRawTx\Encoder\BufferNumber::int(-12),
+                            EthereumRawTx\Encoder\BufferNumber::int(-11),
                         ],
                         [
-                            \BitWasp\Buffertools\Buffer::int(141),
-                            \BitWasp\Buffertools\Buffer::int(142),
-                            \BitWasp\Buffertools\Buffer::int(143),
+                            EthereumRawTx\Encoder\BufferNumber::int(141),
+                            EthereumRawTx\Encoder\BufferNumber::int(142),
+                            EthereumRawTx\Encoder\BufferNumber::int(-143),
                         ],
                         [
                             "I'am a hedgehog",
@@ -869,7 +913,7 @@ describe("Abi", function () {
 
                     $hex = $hex->getHex();
 
-                    expect($hex)->to->equal('9c84fe4c0000000000000000000000000000000000000000000000000000000000000005000000000000000000000000000000000000000000000000000000000000000b000000000000000000000000000000000000000000000000000000000000000c000000000000000000000000000000000000000000000000000000000000000d000000000000000000000000000000000000000000000000000000000000000e00000000000000000000000000000000000000000000000000000000000001800000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000024000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000008d000000000000000000000000000000000000000000000000000000000000008e000000000000000000000000000000000000000000000000000000000000008f000000000000000000000000000000000000000000000000000000000000000f4927616d2061206865646765686f67000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000394927616d20612076657279206c6f6e6720737472696e672077696368206d757374206265206c6f6e676572207468616e203634206279746573000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000c7417bf2692acde4ea230ea83c3b786646ff9bac000000000000000000000000c7417bf2692acde4ea230ea83c3b786646ff9bad000000000000000000000000c7417bf2692acde4ea230ea83c3b786646ff9bae000000000000000000000000c7417bf2692acde4ea230ea83c3b786646ff9baf');
+                    expect($hex)->to->equal('3f6e696c0000000000000000000000000000000000000000000000000000000000000005000000000000000000000000000000000000000000000000000000000000000b000000000000000000000000000000000000000000000000000000000000000cfffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff4fffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff500000000000000000000000000000000000000000000000000000000000001800000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000024000000000000000000000000000000000000000000000000000000000000002a00000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000010000000000000000000000000000000000000000000000000000000000000003000000000000000000000000000000000000000000000000000000000000008d000000000000000000000000000000000000000000000000000000000000008effffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff71000000000000000000000000000000000000000000000000000000000000000f4927616d2061206865646765686f67000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000394927616d20612076657279206c6f6e6720737472696e672077696368206d757374206265206c6f6e676572207468616e203634206279746573000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000c7417bf2692acde4ea230ea83c3b786646ff9bac000000000000000000000000c7417bf2692acde4ea230ea83c3b786646ff9bad000000000000000000000000c7417bf2692acde4ea230ea83c3b786646ff9bae000000000000000000000000c7417bf2692acde4ea230ea83c3b786646ff9baf');
 
                     // todo use real parser ?
 
@@ -883,14 +927,14 @@ describe("Abi", function () {
                     }
 
                     expect($result['a_uint8']->getInt())->to->equal('5');
-                    expect($result['four_uint'][0]->getInt())->to->equal('11');
-                    expect($result['four_uint'][1]->getInt())->to->equal('12');
-                    expect($result['four_uint'][2]->getInt())->to->equal('13');
-                    expect($result['four_uint'][3]->getInt())->to->equal('14');
-                    expect(count($result['dynamic_uint']))->to->equal(3);
-                    expect($result['dynamic_uint'][0]->getInt())->to->equal('141');
-                    expect($result['dynamic_uint'][1]->getInt())->to->equal('142');
-                    expect($result['dynamic_uint'][2]->getInt())->to->equal('143');
+                    expect($result['four_int'][0]->getInt())->to->equal('11');
+                    expect($result['four_int'][1]->getInt())->to->equal('12');
+                    expect($result['four_int'][2]->getInt())->to->equal('-12');
+                    expect($result['four_int'][3]->getInt())->to->equal('-11');
+                    expect(count($result['dynamic_int']))->to->equal(3);
+                    expect($result['dynamic_int'][0]->getInt())->to->equal('141');
+                    expect($result['dynamic_int'][1]->getInt())->to->equal('142');
+                    expect($result['dynamic_int'][2]->getInt())->to->equal('-143');
                     expect($result['2_string'][0]->gethex())->to->equal('4927616d2061206865646765686f67');
                     expect($result['2_string'][1]->gethex())->to->equal('4927616d20612076657279206c6f6e6720737472696e672077696368206d757374206265206c6f6e676572207468616e203634206279746573');
                     expect($result['dynamic_address'][0]->gethex())->to->equal('c7417bf2692acde4ea230ea83c3b786646ff9bac');
