@@ -16,7 +16,6 @@ class StringEncoder
     public static function encode(string $string, int $lenghtBytes = 0)
     {
         $return = '';
-        // todo $lenghtBytes > 0
 
         $hex = unpack('H*', $string);
         $stringHex = array_shift($hex);
@@ -28,6 +27,19 @@ class StringEncoder
         }
 
         $return .= str_pad($stringHex, ceil(strlen($stringHex) / 64) * 64, '0', STR_PAD_RIGHT);
+
+        return $return;
+    }
+
+    public static function encodeFromHex(Buffer $buffer, int $lenghtBytes = 0)
+    {
+        $return = '';
+
+        if($lenghtBytes == 0) {
+            $return .= ParamType::encodeUint(Buffer::int(strlen($buffer->getHex()) / 2));
+        }
+
+        $return .= str_pad($buffer->getHex(), ceil(strlen($buffer->getHex()) / 64) * 64, '0', STR_PAD_RIGHT);
 
         return $return;
     }

@@ -146,6 +146,14 @@ contract Sample {
       });
     }
 
+    function getBytes() public view returns (bytes _y) {
+        _y = y;
+    }
+
+    function getString() public view returns (string _s) {
+        _s = s;
+    }
+
     // with inputs
     function noOutput(address _a, uint _u, int _i, bool _b) public {
       struct14[1] = Struct1({
@@ -164,6 +172,14 @@ contract Sample {
         u = _u;
         b = _b;
         _i = i;
+    }
+
+    function setBytes(bytes _y) public {
+        y = _y;
+    }
+
+    function setString(string _s) public {
+        s = _s;
     }
     
     // complex

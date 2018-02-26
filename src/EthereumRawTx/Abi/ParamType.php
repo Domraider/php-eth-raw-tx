@@ -50,6 +50,7 @@ class ParamType
             }
 
             $this->nestedType = new ParamType($this->name);
+            return;
         }
 
         /*
@@ -61,16 +62,6 @@ class ParamType
         if(preg_match('/^([a-z]*)([0-9]+)$/', $this->name, $match) === 1 ) {
             $this->name = $match[1];
             $this->length = (int)$match[2];
-        }
-
-        if ($this->name === 'address') {
-            $this->name = 'address';
-            return;
-        }
-
-        if ($this->name === 'bool') {
-            $this->name = 'bool';
-            return;
         }
     }
 
@@ -281,23 +272,22 @@ class ParamType
             case 'bytes':
                 if($this->isDynamic()) {
                     if ($value instanceof Buffer === true) {
-                        throw new \Exception('TODO');
-                        // TODO
-                        //return $this->encodeParam('uint', Buffer::int(strlen($value->getHex()) / 2)).$value->getHex();
+
+                        return StringEncoder::encodeFromHex($value);
                     }
                     return StringEncoder::encode($value);
                 }
 
+                if(!$this->getLength()) {
+                    throw new \Exception('Unexpected dynamic type with no length');
+                }
+
                 if ($value instanceof Buffer === true) {
-                    throw new \Exception('TODO');
                     if (strlen($value->getHex()) > 64) {
                         throw new \Exception("bytes cannot exeed 64 chars");
                     }
-                    return str_pad($value->getHex(), 64, '0', STR_PAD_RIGHT);
-                }
 
-                if(!$this->getLength()) {
-                    throw new \Exception('Unexpected dynamic type with no length');
+                    return StringEncoder::encodeFromHex($value, $this->getLength());
                 }
 
                 return StringEncoder::encode($value, $this->getLength());

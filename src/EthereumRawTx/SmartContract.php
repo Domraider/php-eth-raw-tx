@@ -2,6 +2,7 @@
 namespace EthereumRawTx;
 
 use BitWasp\Buffertools\Buffer;
+use EthereumRawTx\Abi\Abi;
 use EthereumRawTx\Encoder\Keccak;
 use EthereumRawTx\Tool\Hex;
 
@@ -12,6 +13,7 @@ class SmartContract
     const ABI_TYPE_EVENT = 'event';
 
     protected $bin;
+    /** @var Abi  */
     protected $abi;
 
     /**
@@ -27,7 +29,13 @@ class SmartContract
         }
 
         $this->bin = Hex::cleanPrefix($bin);
-        $this->abi = $this->parseAbi(json_decode($abi, true));
+        //$this->abi = $this->parseAbi(json_decode($abi, true));
+        $this->abi = new Abi(json_decode($abi, true));
+    }
+
+    public function getAbi()
+    {
+        return $this->abi;
     }
 
     /**
@@ -37,25 +45,26 @@ class SmartContract
      */
     public function getConstructBin(array $args = []) :Buffer
     {
-        if(isset($this->abi[self::ABI_TYPE_CONSTRUCTOR]) && isset($this->abi[self::ABI_TYPE_CONSTRUCTOR]['inputs'])) {
-            return Buffer::hex($this->bin . $this->parseInputs($this->abi[self::ABI_TYPE_CONSTRUCTOR]['inputs'], $args));
+        if (null === $constructor = $this->abi->getConstructor()) {
+            return Buffer::hex($this->bin);
         }
 
-        return Buffer::hex($this->bin);
+        $args = $constructor->inputsToHex($args)->getHex();
+
+        return Buffer::hex($this->bin . $args);
     }
 
     /**
-     * @param string $method
+     * @param string $prototypeHash
      * @param array $args
      * @return Buffer
      * @throws \Exception
      */
-    public function getMethodBin(string $method, array $args = []): Buffer
+    public function getMethodBin(string $prototypeHash, array $args = []): Buffer
     {
-        if (!isset($this->abi[self::ABI_TYPE_FUNCTION][$method])) {
-            throw new \Exception("Method does not exists in abi");
-        }
-        return Buffer::hex(substr($this->abi[self::ABI_TYPE_FUNCTION][$method]['prototype'], 0, 8) . $this->parseInputs($this->abi[self::ABI_TYPE_FUNCTION][$method]['inputs'], $args));
+        $function = $this->abi->getFunctionByPrototypeHash($prototypeHash);
+
+        return $function->inputsToHex($args);
     }
 
     /**
@@ -72,13 +81,23 @@ class SmartContract
     }
 
     /**
-     * @param string $method
+     * @param string $prototypeHash
      * @param string $raw
      * @return array
      * @throws \Exception
      */
-    public function decodeMethodResponse(string $method, string $raw): array
+    public function decodeMethodResponse(string $prototypeHash, string $raw): array
     {
+        if(null === $function = $this->abi->getFunctionByPrototypeHash($prototypeHash)) {
+            throw new \Exception("Method does not exists in abi");
+        }
+
+        $values['eventName'] = $event->getName();
+        $values['data'] = $event->parseInputs(Hex::cleanPrefix($values['data']), array_map([Hex::class, 'cleanPrefix'], $values['topics']));
+
+
+        return $values;
+
         if (!isset($this->abi[self::ABI_TYPE_FUNCTION][$method])) {
             throw new \Exception("Method does not exists in abi");
         }
@@ -95,9 +114,8 @@ class SmartContract
      */
     public function decodeEventResponse(array $values): array
     {
-        // If topics does not set , return $values
         if (!isset($values['topics']) || !isset($values['topics'][0])) {
-            return $values;
+            throw new \Exception("Missing topics");
         }
 
         /** @var string $topic */
@@ -112,15 +130,12 @@ class SmartContract
             }
         }
 
-        if(!isset($this->abi['prototype'][$topic])) {
+        if(null === $event = $this->abi->getEventByPrototypeHash($topic)) {
             throw new \Exception("Event does not exists in abi");
         }
 
-        /** @var string $event */
-        $event = $this->abi['prototype'][$topic];
-
-        $values['eventName'] = $event;
-        $values['data'] = $this->parseOutputs($this->abi[self::ABI_TYPE_EVENT][$event]['inputs'], Hex::cleanPrefix($values['data']), $topics);
+        $values['eventName'] = $event->getName();
+        $values['data'] = $event->parseInputs(Hex::cleanPrefix($values['data']), array_map([Hex::class, 'cleanPrefix'], $values['topics']));
 
 
         return $values;
