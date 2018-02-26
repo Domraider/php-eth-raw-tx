@@ -90,8 +90,8 @@ describe("Abi", function () {
                 it('int32[9]', function () {
                     $type = new \EthereumRawTx\Abi\ParamType('int32[9]');
                     expect($type->getRaw())->to->equal('int32[9]');
-                    expect($type->getName())->to->equal('int');
-                    expect($type->getLength())->to->equal(32);
+                    expect($type->getName())->to->equal('int32');
+                    expect($type->getLength())->to->equal(0);
                     expect($type->isDynamic())->to->equal(false);
                     expect($type->isArray())->to->equal(true);
                     expect($type->getNestedType())->to->instanceof(\EthereumRawTx\Abi\ParamType::class);
@@ -121,6 +121,20 @@ describe("Abi", function () {
                     expect($type->isArray())->to->equal(true);
                     expect($type->getNestedType())->to->instanceof(\EthereumRawTx\Abi\ParamType::class);
                     expect($type->getNestedType()->getName())->to->equal('uint');
+                    expect($type->getStaticArrayLength())->to->equal(0);
+                });
+                it('uint16[]', function () {
+                    $type = new \EthereumRawTx\Abi\ParamType('uint16[]');
+                    expect($type->getRaw())->to->equal('uint16[]');
+                    expect($type->getName())->to->equal('uint16');
+                    expect($type->getLength())->to->equal(0);
+                    expect($type->isDynamic())->to->equal(true);
+                    expect($type->isArray())->to->equal(true);
+                    expect($type->getNestedType())->to->instanceof(\EthereumRawTx\Abi\ParamType::class);
+                    expect($type->getNestedType()->getRaw())->to->equal('uint16');
+                    expect($type->getNestedType()->getName())->to->equal('uint');
+                    expect($type->getNestedType()->getLength())->to->equal(16);
+                    expect($type->getNestedType()->isDynamic())->to->false();
                     expect($type->getStaticArrayLength())->to->equal(0);
                 });
                 it('uint[][4]', function () {
@@ -239,6 +253,12 @@ describe("Abi", function () {
                     expect(\EthereumRawTx\Encoder\StringEncoder::decode($parsed->getHex()))->to->equal("I'am a big big big and very long chain of characters in utf-8 ! Utf-8 is for french words like 'bientôt'");
                 });
             });
+            it('parse bytes', function () {
+                $param = new \EthereumRawTx\Abi\ParamType('bytes');
+
+                $parsed = $param->decode('000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000030001020000000000000000000000000000000000000000000000000000000000');
+                expect($parsed->getHex())->to->equal("000102");
+            });
             context('parse fixed-length arrays', function () {
                 it('of uint', function(){
                     $param = new \EthereumRawTx\Abi\ParamType('uint[4]');
@@ -252,6 +272,17 @@ describe("Abi", function () {
                     expect($parsed[1]->getInt())->to->equal("34");
                     expect($parsed[2]->getInt())->to->equal("546");
                     expect($parsed[3]->getInt())->to->equal("8738");
+                });
+                it('of uint16', function(){
+                    $param = new \EthereumRawTx\Abi\ParamType('uint16[2]');
+
+                    $parsed = $param->decode('00000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000022');
+                    expect($parsed)->to->be->an('array');
+                    foreach ($parsed as $p) {
+                        expect($p)->to->instanceof(\BitWasp\Buffertools\Buffer::class);
+                    }
+                    expect($parsed[0]->getInt())->to->equal("2");
+                    expect($parsed[1]->getInt())->to->equal("34");
                 });
                 it('of string', function(){
                     $param = new \EthereumRawTx\Abi\ParamType('string[2]');
@@ -275,6 +306,23 @@ describe("Abi", function () {
             context('parse dynamic arrays', function () {
                 it('of uint', function () {
                     $param = new \EthereumRawTx\Abi\ParamType('uint[]');
+
+                    $parsed = $param->decode(
+                        "0000000000000000000000000000000000000000000000000000000000000020" // position of length
+                        . "0000000000000000000000000000000000000000000000000000000000000003" // length
+                        . "0000000000000000000000000000000000000000000000000000000000000001"
+                        . "0000000000000000000000000000000000000000000000000000000000000002"
+                        . "0000000000000000000000000000000000000000000000000000000000000003"
+                    );
+
+                    expect($parsed)->to->be->an('array');
+                    expect(count($parsed))->to->equal(3);
+                    expect($parsed[0]->getInt())->to->equal("1");
+                    expect($parsed[1]->getInt())->to->equal("2");
+                    expect($parsed[2]->getInt())->to->equal("3");
+                });
+                it('of uint16', function(){
+                    $param = new \EthereumRawTx\Abi\ParamType('uint16[]');
 
                     $parsed = $param->decode(
                         "0000000000000000000000000000000000000000000000000000000000000020" // position of length
@@ -375,9 +423,44 @@ describe("Abi", function () {
                     expect($parsed)->to->equal('00000000000000000000000000000000000000000000000000000000000000694927616d206120626967206269672062696720616e642076657279206c6f6e6720636861696e206f66206368617261637465727320696e207574662d382021205574662d3820697320666f72206672656e636820776f726473206c696b6520276269656e74c3b474270000000000000000000000000000000000000000000000');
                 });
             });
+            context('accept hex data', function () {
+                it('for string', function(){
+                    $param = new \EthereumRawTx\Abi\ParamType('string');
+
+                    $parsed = $param->encode(\BitWasp\Buffertools\Buffer::hex('666f6f'));
+
+                    expect($parsed)->to->equal("0000000000000000000000000000000000000000000000000000000000000003666f6f0000000000000000000000000000000000000000000000000000000000");
+                });
+                it('for bytes', function() {
+                    $param = new \EthereumRawTx\Abi\ParamType('bytes');
+
+                    $parsed = $param->encode(\BitWasp\Buffertools\Buffer::hex('666f6f'));
+
+                    expect($parsed)->to->equal("0000000000000000000000000000000000000000000000000000000000000003666f6f0000000000000000000000000000000000000000000000000000000000");
+                });
+                it('for fixed-length bytes', function() {
+                    $param = new \EthereumRawTx\Abi\ParamType('bytes20');
+
+                    $parsed = $param->encode(\BitWasp\Buffertools\Buffer::hex('666f6f'));
+
+                    expect($parsed)->to->equal("666f6f0000000000000000000000000000000000000000000000000000000000");
+                });
+            });
             context('parse from fixed-length arrays', function () {
                 it('of uint', function(){
                     $param = new \EthereumRawTx\Abi\ParamType('uint[4]');
+
+                    $parsed = $param->encode([
+                        \BitWasp\Buffertools\Buffer::int(2),
+                        \BitWasp\Buffertools\Buffer::int(52),
+                        \BitWasp\Buffertools\Buffer::int(1350),
+                        \BitWasp\Buffertools\Buffer::int(34616),
+                    ]);
+
+                    expect(implode("", $parsed))->to->equal('0000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000003400000000000000000000000000000000000000000000000000000000000005460000000000000000000000000000000000000000000000000000000000008738');
+                });
+                it('of uint32', function(){
+                    $param = new \EthereumRawTx\Abi\ParamType('uint32[4]');
 
                     $parsed = $param->encode([
                         \BitWasp\Buffertools\Buffer::int(2),
@@ -408,6 +491,22 @@ describe("Abi", function () {
             context('parse dynamic arrays', function () {
                 it('of uint', function () {
                     $param = new \EthereumRawTx\Abi\ParamType('uint[]');
+
+                    $parsed = $param->encode([
+                        \BitWasp\Buffertools\Buffer::int(1),
+                        \BitWasp\Buffertools\Buffer::int(2),
+                        \BitWasp\Buffertools\Buffer::int(3),
+                    ]);
+
+                    expect(implode('', $parsed))->to->equal(
+                        "0000000000000000000000000000000000000000000000000000000000000003" // count
+                        . "0000000000000000000000000000000000000000000000000000000000000001"
+                        . "0000000000000000000000000000000000000000000000000000000000000002"
+                        . "0000000000000000000000000000000000000000000000000000000000000003"
+                    );
+                });
+                it('of uint32', function () {
+                    $param = new \EthereumRawTx\Abi\ParamType('uint32[]');
 
                     $parsed = $param->encode([
                         \BitWasp\Buffertools\Buffer::int(1),

@@ -63,13 +63,6 @@ class Abi
         return $this->constructor;
     }
 
-    public function getFunctionByPrototype($prototype): FunctionItem
-    {
-        $hash = substr($hash, 0, 8);
-
-        return $this->functions[$hash] ?? null;
-    }
-
     public function getFunctionByPrototypeHash($hash): FunctionItem
     {
         $hash = substr($hash, 0, 8);
