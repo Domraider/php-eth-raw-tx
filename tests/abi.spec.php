@@ -955,7 +955,7 @@ describe("Abi", function () {
                 expect($e)->to->instanceof(\Exception::class);
                 expect($e->getMessage())->to->equal('Missing field `outputs`');
             });
-            it('parse outputs', function () {
+            it('map outputs to Params', function () {
                 $item = new \EthereumRawTx\Abi\FunctionItem([
                     'name' => 'the_name',
                     'inputs' => [],
@@ -1005,6 +1005,30 @@ describe("Abi", function () {
 
                 expect($item)->to->instanceof(\EthereumRawTx\Abi\FunctionItem::class);
             });
+            it('parse outputs from hex', function () {
+                $function = new \EthereumRawTx\Abi\FunctionItem([
+                    'name' => 'the_name',
+                    'inputs' => [],
+                    'payable' => false,
+                    'outputs' => [
+                        [
+                            'name' => 'the_name',
+                            'type' => 'string',
+                        ],
+                        [
+                            'name' => 'another_name',
+                            'type' => 'uint8',
+                        ],
+                    ]
+                ]);
+
+                $outputs = $function->parseOutputs("0000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000003666f6f0000000000000000000000000000000000000000000000000000000000");
+
+                expect($outputs)->to->be->an('array');
+                expect(count($outputs))->to->equal(2);
+                expect($outputs['the_name']->getHex())->to->equal("666f6f");
+                expect($outputs['another_name']->getInt())->to->equal("12");
+            });
         });
         context("EventItem", function() {
             it('build from factory', function () {
@@ -1015,6 +1039,47 @@ describe("Abi", function () {
                 ]);
 
                 expect($item)->to->instanceof(\EthereumRawTx\Abi\EventItem::class);
+            });
+            it('parse inputs from hex', function () {
+                $event = new \EthereumRawTx\Abi\EventItem([
+                    'name' => 'the_name',
+                    'inputs' => [
+                        [
+                            'name' => 'the_name',
+                            'type' => 'string',
+                        ],
+                        [
+                            'name' => 'indexed_name',
+                            'indexed' => true,
+                            'type' => 'bool',
+                        ],
+                        [
+                            'name' => 'another_name',
+                            'type' => 'uint8',
+                        ],
+                        [
+                            'name' => 'indexed_string',
+                            'indexed' => true,
+                            'type' => 'string',
+                        ],
+                    ]
+                ]);
+
+                $inputs = $event->parseInputs(
+                    "0000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000003666f6f0000000000000000000000000000000000000000000000000000000000",
+                    [
+                        "firstTopicIsProtoypeHash",
+                        "0000000000000000000000000000000000000000000000000000000000000001",
+                        "EEC297efAB6EA7AC890e13abf7b784BFEEC297efAB6EA7AC890e13abf7b784BF",
+                    ]
+                );
+
+                expect($inputs)->to->be->an('array');
+                expect(count($inputs))->to->equal(4);
+                expect($inputs['the_name']->getHex())->to->equal("666f6f");
+                expect((bool)$inputs['indexed_name']->getInt())->to->true();
+                expect($inputs['another_name']->getInt())->to->equal("12");
+                expect($inputs['indexed_string']->getHex())->to->equal("eec297efab6ea7ac890e13abf7b784bfeec297efab6ea7ac890e13abf7b784bf");
             });
         });
     });
