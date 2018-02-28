@@ -13,7 +13,8 @@ $responseRaw = "0x00000000000000000000000000000000000000000000000000000000000000
 
 //$raw = $sc->decodeMethodResponse("getDates", $responseRaw);
 //$raw = $sc->decodeMethodResponse("getLeader", $responseRaw);
-$raw = $sc->decodeMethodResponse("getCurrentAmounts", $responseRaw);
+$hash = \EthereumRawTx\Abi\AbstractItem::hashPrototype("getCurrentAmounts()");
+$raw = $sc->decodeFunctionResponse($hash, $responseRaw);
 
 echo "Parsed response :" . PHP_EOL;
 var_dump($raw);

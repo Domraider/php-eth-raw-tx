@@ -74,4 +74,16 @@ class FunctionItem extends AbstractItem
 
         return parent::getPrototype();
     }
+
+    public function parseOutputs(string $hexData)
+    {
+        $result = [];
+        $position = 0;
+
+        foreach ($this->getOutputs() as $i => $output) {
+            $result [$output->getName()] = $output->parse($hexData, $position);
+        }
+
+        return $result;
+    }
 }
