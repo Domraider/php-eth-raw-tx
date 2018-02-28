@@ -243,14 +243,12 @@ describe("Abi", function () {
 
                     $parsed = $param->decode('00000000000000000000000000000000000000000000000000000000000000200000000000000000000000000000000000000000000000000000000000000003666f6f0000000000000000000000000000000000000000000000000000000000');
                     expect($parsed->getHex())->to->equal("666f6f");
-                    expect(\EthereumRawTx\Encoder\StringEncoder::decode($parsed->getHex()))->to->equal("foo");
                 });
                 it('long string', function(){
                     $param = new \EthereumRawTx\Abi\ParamType('string');
 
                     $parsed = $param->decode('000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000694927616d206120626967206269672062696720616e642076657279206c6f6e6720636861696e206f66206368617261637465727320696e207574662d382021205574662d3820697320666f72206672656e636820776f726473206c696b6520276269656e74c3b474270000000000000000000000000000000000000000000000');
                     expect($parsed->getHex())->to->equal("4927616d206120626967206269672062696720616e642076657279206c6f6e6720636861696e206f66206368617261637465727320696e207574662d382021205574662d3820697320666f72206672656e636820776f726473206c696b6520276269656e74c3b47427");
-                    expect(\EthereumRawTx\Encoder\StringEncoder::decode($parsed->getHex()))->to->equal("I'am a big big big and very long chain of characters in utf-8 ! Utf-8 is for french words like 'bientôt'");
                 });
             });
             it('parse bytes', function () {
@@ -801,7 +799,6 @@ describe("Abi", function () {
                     expect($result['dynamic_bytes20'][1]->gethex())->to->equal('6261720000000000000000000000000000000000');
                     expect($result['dynamic_bytes20'][2]->gethex())->to->equal('666f6f6261720000000000000000000000000000');
                     expect($result['dynamic_bytes20'][3]->gethex())->to->equal('736f6d657468696e676f746865727477656e7479');
-                    expect(\EthereumRawTx\Encoder\StringEncoder::decode($result['dynamic_bytes20'][3]->gethex()))->to->equal('somethingothertwenty');
                 });
                 it('complex example', function () {
                     $item = new class([
@@ -896,8 +893,6 @@ describe("Abi", function () {
                     expect($result['dynamic_uint'][2]->getInt())->to->equal('143');
                     expect($result['2_string'][0]->gethex())->to->equal('4927616d2061206865646765686f67');
                     expect($result['2_string'][1]->gethex())->to->equal('4927616d20612076657279206c6f6e6720737472696e672077696368206d757374206265206c6f6e676572207468616e203634206279746573');
-                    expect(\EthereumRawTx\Encoder\StringEncoder::decode($result['2_string'][0]->gethex()))->to->equal("I'am a hedgehog");
-                    expect(\EthereumRawTx\Encoder\StringEncoder::decode($result['2_string'][1]->gethex()))->to->equal("I'am a very long string wich must be longer than 64 bytes");
                     expect($result['dynamic_address'][0]->gethex())->to->equal('c7417bf2692acde4ea230ea83c3b786646ff9bac');
                     expect($result['dynamic_address'][1]->gethex())->to->equal('c7417bf2692acde4ea230ea83c3b786646ff9bad');
                     expect($result['dynamic_address'][2]->gethex())->to->equal('c7417bf2692acde4ea230ea83c3b786646ff9bae');
