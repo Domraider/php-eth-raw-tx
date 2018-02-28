@@ -7,7 +7,8 @@ $smartContractAbi = "[{\"constant\":true,\"inputs\":[],\"name\":\"startDate\",\"
 
 $sc = new \EthereumRawTx\SmartContract($smartContractBinaries, $smartContractAbi);
 
-$raw = $sc->getMethodBin("getCurrentAmounts");
+$hash = \EthereumRawTx\Abi\AbstractItem::hashPrototype("getCurrentAmounts()");
+$raw = $sc->getFunctionBin($hash);
 
 echo "Generated raw transaction :" . PHP_EOL;
 echo $raw->getHex() . PHP_EOL;

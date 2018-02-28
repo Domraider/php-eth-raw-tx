@@ -7,7 +7,7 @@ $smartContractAbi = "[{\"constant\":true,\"inputs\":[],\"name\":\"startDate\",\"
 
 $sc = new \EthereumRawTx\SmartContract($smartContractBinaries, $smartContractAbi);
 
-$raw = $sc->getEventBin("BidAccepted");
+$raw = substr(\EthereumRawTx\Abi\AbstractItem::hashPrototype("BidAccepted(uint256,uint256,address)"), 0, 8);
 
 echo "Generated raw transaction :" . PHP_EOL;
-echo $raw->getHex() . PHP_EOL;
+echo $raw . PHP_EOL;
