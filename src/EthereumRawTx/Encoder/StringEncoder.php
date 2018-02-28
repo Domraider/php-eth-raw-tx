@@ -35,11 +35,15 @@ class StringEncoder
     {
         $return = '';
 
+        $stringHex = $buffer->getHex();
+
         if($lenghtBytes == 0) {
             $return .= ParamType::encodeUint(Buffer::int(strlen($buffer->getHex()) / 2));
+        } else {
+            $stringHex = substr($stringHex, 0, $lenghtBytes*2);
         }
 
-        $return .= str_pad($buffer->getHex(), ceil(strlen($buffer->getHex()) / 64) * 64, '0', STR_PAD_RIGHT);
+        $return .= str_pad($stringHex, ceil(strlen($stringHex) / 64) * 64, '0', STR_PAD_RIGHT);
 
         return $return;
     }
