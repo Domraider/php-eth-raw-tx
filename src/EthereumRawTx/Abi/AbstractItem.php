@@ -79,10 +79,21 @@ abstract class AbstractItem
         }
 
         $this->prototype = sprintf('%s(%s)', $this->getName(), implode(',', $types));
-        $buffer = new Buffer($this->prototype);
-        $hash = Keccak::hash($buffer, 256);
-        $this->prototypeHash = $hash->getHex();
+
+        $this->prototypeHash = self::hashPrototype($this->prototype);
         $this->shortPrototypeHash = substr($this->prototypeHash, 0, 8);
+    }
+
+    /**
+     * @param string $prototype
+     * @return string
+     * @throws \Exception
+     */
+    public static function hashPrototype(string $prototype)
+    {
+        $buffer = new Buffer($prototype);
+        $hash = Keccak::hash($buffer, 256);
+        return $hash->getHex();
     }
 
     protected function setInputsEncodedFixedPartLength()
