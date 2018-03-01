@@ -3,7 +3,7 @@
     "description": "PHP tool for creating Ethereum raw transactions",
     "type": "library",
     "require": {
-        "php-64bit": ">=7.0.0",
+        "php-64bit": ">=7.1",
         "bitwasp/secp256k1-php": "^0.1.2",
         "bitwasp/buffertools": "^0.5.0"
     },
@@ -12,6 +12,10 @@
         {
             "name": "Etienne Roudeix",
             "email": "etienne.roudeix@gmail.com"
+        },
+        {
+            "name": "Mike Nopère",
+            "email": "mike.n@domraider.com"
         }
     ],
     "autoload": {
