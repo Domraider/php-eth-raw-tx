@@ -97,3 +97,11 @@ Demo :
 ```bash
 php examples/send_ether.php
 ```
+
+## Tests
+
+You can run specs with
+
+```bash
+vendor/bin/peridot tests/
+```
