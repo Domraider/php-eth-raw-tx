@@ -1024,6 +1024,30 @@ describe("Abi", function () {
                 expect($outputs['the_name']->getHex())->to->equal("666f6f");
                 expect($outputs['another_name']->getInt())->to->equal("12");
             });
+            it('parse inputs from hex', function () {
+                $function = new \EthereumRawTx\Abi\FunctionItem([
+                    'name' => 'the_name',
+                    'inputs' => [
+                        [
+                            'name' => 'the_name',
+                            'type' => 'string',
+                        ],
+                        [
+                            'name' => 'another_name',
+                            'type' => 'uint8',
+                        ],
+                    ],
+                    'payable' => false,
+                    'outputs' => []
+                ]);
+
+                $inputs = $function->parseInputs('0000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000000000000000000000000000000000000000c0000000000000000000000000000000000000000000000000000000000000003666f6f0000000000000000000000000000000000000000000000000000000000');
+
+                expect($inputs)->to->be->an('array');
+                expect(count($inputs))->to->equal(2);
+                expect($inputs['the_name']->getHex())->to->equal("666f6f");
+                expect($inputs['another_name']->getInt())->to->equal("12");
+            });
         });
         context("EventItem", function() {
             it('build from factory', function () {

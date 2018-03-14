@@ -63,6 +63,29 @@ class SmartContract
     }
 
     /**
+     * @param string $raw
+     */
+    public function decodeFunctionFromData(string $raw): array
+    {
+        $raw = Hex::cleanPrefix($raw);
+
+        $prototypeHash = substr($raw, 0, 8);
+        $rawInputs = substr($raw, 8);
+
+        $function = $this->getAbi()->getFunctionByPrototypeHash($prototypeHash);
+
+        $inputs = $function->parseInputs($rawInputs);
+
+        return [
+            'function' => [
+                'name' => $function->getName(),
+                'prototype' => $function->getPrototype(),
+            ],
+            'inputs' => $inputs,
+        ];
+    }
+
+    /**
      * @param string $prototypeHash
      * @param string $raw
      * @return array
