@@ -2,7 +2,7 @@
 namespace EthereumRawTx;
 
 use EthereumRawTx\Encoder\Keccak;
-use EthereumRawTx\Encoder\RplEncoder;
+use EthereumRawTx\Rlp\RlpEncoder;
 use EthereumRawTx\Tool\Hex;
 use BitWasp\Buffertools\Buffer;
 
@@ -170,7 +170,7 @@ class Transaction
         }
 
         /** @var Buffer $hash */
-        $hash = RplEncoder::encode($raw);
+        $hash = RlpEncoder::encode($raw);
         /** @var Buffer $shaed */
         $shaed = Keccak::hash($hash);
 
@@ -185,7 +185,7 @@ class Transaction
         /** @var array $raw */
         $raw = $this->getInput();
 
-        return RplEncoder::encode($raw);
+        return RlpEncoder::encode($raw);
     }
 
 }

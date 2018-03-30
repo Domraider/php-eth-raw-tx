@@ -16,7 +16,7 @@ describe("Encoder ", function () {
             "s" => new BitWasp\Buffertools\Buffer(),
         ];
 
-        $rplEncode = EthereumRawTx\Encoder\RplEncoder::encode($data);
+        $rplEncode = EthereumRawTx\Rlp\RlpEncoder::encode($data);
 
         expect($rplEncode->getHex())->to->equal('e2808085100000000094e9875966d7d6490592db866f815faf6fa94225a68080808080');
 

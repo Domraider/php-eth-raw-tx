@@ -1,32 +1,27 @@
 <?php
-namespace EthereumRawTx\Encoder;
+
+namespace EthereumRawTx\Rlp;
 
 use BitWasp\Buffertools\Buffer;
 
 /**
- * Class RplEncoder
- * @package EthereumRawTx\Encoder
  * @see https://github.com/ethereum/wiki/wiki/RLP
  */
-class RplEncoder
+class RlpEncoder
 {
 
-    /**
-     * @param array|string|Buffer $input
-     * @return Buffer
-     * @throws \Exception
-     */
-    static function encode($input): Buffer
+    public static function encode($input): Buffer
     {
         if ($input instanceof Buffer) {
-            if($input->getBinary() === Buffer::hex("00")->getBinary()) {
+            if ($input->getBinary() === Buffer::hex("00")->getBinary()) {
                 return new Buffer(chr(128));
             }
-            if (strlen($input->getBinary()) == 1 && ord($input->getBinary()) < 128){
+            if (strlen($input->getBinary()) == 1 && ord($input->getBinary()) < 128) {
                 return $input;
             }
             return new Buffer(self::encodeLength(strlen($input->getBinary()), 128) . $input->getBinary());
         }
+
         if (is_array($input)) {
             /** @var string $output */
             $output = '';
@@ -37,24 +32,23 @@ class RplEncoder
 
             return new Buffer(self::encodeLength(strlen($output), 192) . $output);
         }
+
+        throw new \Exception('Invalid type: ' . gettype($input));
     }
 
-    /**
-     * @param int $l
-     * @param int $offset
-     * @return string
-     * @throws \Exception
-     */
-    static function encodeLength(int $l, int $offset): string
+    public static function encodeLength(int $l, int $offset): string
     {
         if ($l < 56) {
             return chr($l + $offset);
-        } elseif ($l <256 ** 8) {
+        }
+
+        if ($l < 256 ** 8) {
             /** @var string $bl */
             $bl = Buffer::int($l)->getBinary();
+
             return chr(strlen($bl) + $offset + 55) . $bl;
-        } else {
-            throw new \Exception('Failed to encode length');
         }
+
+        throw new \Exception('Failed to encode length');
     }
 }
