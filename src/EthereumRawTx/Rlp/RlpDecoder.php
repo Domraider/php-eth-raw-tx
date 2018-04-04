@@ -73,7 +73,7 @@ class RlpDecoder
 
             if ($prefix < self::OFFSET_SHORT_STRING) {
 
-                $rlpList->add(Buffer::hex(dechex($prefix)));
+                $rlpList->add(Buffer::int($prefix));
                 $startPos++;
                 continue;
             }
