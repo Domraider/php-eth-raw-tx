@@ -1,5 +1,7 @@
 <?php
 
+use BitWasp\Buffertools\Buffer;
+
 describe("Transaction ", function () {
 
     it("get raw transaction", function () {
@@ -19,40 +21,48 @@ describe("Transaction ", function () {
 
     });
 
-    it("get signer", function () {
+    context("get signer", function () {
+        it("with antireplay", function () {
+            $rawTx = "f86a0d8477359400825208942e2a1ccc9f972fa08213ce689d4f83e6c8bed46987214e7d3b0c6c008025a0393437d069f6a7462e9fa18aaa68d11b9d493531342ea8332d6c7d50292a463ca00a8f4e190b4e39037ca6e8b07607a94c47671d77b3f16be0a8477eb6e29bbeaf";
+            $decoded = \EthereumRawTx\Rlp\RlpDecoder::decode(Buffer::hex($rawTx));
 
-        $decoded = [
-            "1d",
-            "09184e72a000",
-            "030000",
-            "d44d259015b61a5fe5027221239d840d92583adb",
-            "029d42b64e76714244cb",
-            "",
-            "2b",
-            "94c97a39927c1f6ce4f735d48c2ac0f2bf9159aede9bff15e6392a1158485ea8",
-            "63177388e144d5cb7955fe73e81827bdce14c36d5297d2616ef072c5442f3508",
-        ];
+            $tx = new \EthereumRawTx\Transaction(
+                $decoded[3],
+                $decoded[4],
+                $decoded[5],
+                $decoded[0],
+                $decoded[1],
+                $decoded[2]
+            );
 
-        $chainId = \BitWasp\Buffertools\Buffer::int(4); // rinkeby
+            $signer = $tx->getSigner(
+                $decoded[7],
+                $decoded[8],
+                $decoded[6]
+            );
 
-        $tx = new \EthereumRawTx\Transaction(
-            \BitWasp\Buffertools\Buffer::hex($decoded[3]),
-            \BitWasp\Buffertools\Buffer::hex($decoded[4]),
-            \BitWasp\Buffertools\Buffer::hex($decoded[5]),
-            \BitWasp\Buffertools\Buffer::hex($decoded[0]),
-            \BitWasp\Buffertools\Buffer::hex($decoded[1]),
-            \BitWasp\Buffertools\Buffer::hex($decoded[2])
-        );
+            expect($signer->getHex())->to->equal('c216f090241851087b5f4b44fc7315030e0a2b9c');
+        });
+        it("without antireplay", function () {
+            $rawTx = "f86b0684b2d05e008252089427b003ddc012a41899a904b1b55dc02f198abaf388159b8d4b20dc2400801ca0adc7af3a42df0b2b868a3be34b78e966d615bbcfe297653b7e176efa57ee3a39a02b912223631485fc62e95e457a2065645d58b8fa28da69d3b6d94e4b0800675a";
+            $decoded = \EthereumRawTx\Rlp\RlpDecoder::decode(Buffer::hex($rawTx));
 
-        $signer = $tx->getSigner(
-            \BitWasp\Buffertools\Buffer::hex($decoded[7]),
-            \BitWasp\Buffertools\Buffer::hex($decoded[8]),
-            \BitWasp\Buffertools\Buffer::hex($decoded[6]),
-            $chainId
-        );
+            $tx = new \EthereumRawTx\Transaction(
+                $decoded[3],
+                $decoded[4],
+                $decoded[5],
+                $decoded[0],
+                $decoded[1],
+                $decoded[2]
+            );
 
-        expect($signer->getHex())->to->equal('e78102df96419cd9c44d6bd8f14ea87712a3b479');
+            $signer = $tx->getSigner(
+                $decoded[7],
+                $decoded[8],
+                $decoded[6]
+            );
 
+            expect($signer->getHex())->to->equal('9f663e734a345bbc61eda13b9d6ac25e0edc8a41');
+        });
     });
 });
-

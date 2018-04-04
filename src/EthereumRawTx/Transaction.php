@@ -125,7 +125,16 @@ class Transaction
     {
         $chainId = $chainId ?? Buffer::int('1');
 
-        $recId = $v->getInt() - 27 - $chainId->getInt() * 2 - 8;
+        // determine recover id
+        if ($v->getInt() == 27 || $v->getInt() == 28) {
+            // no anti-replay
+            $recId = $v->getInt() - 27;
+            // do not use chain Id in hash calculation
+            $chainId = Buffer::int('0');
+        } else {
+            // anti-replay
+            $recId = $v->getInt() - 27 - $chainId->getInt() * 2 - 8;
+        }
 
         if ($recId > 3 || $recId < 0) {
             throw new \Exception("Incorrect signature or chain id");
