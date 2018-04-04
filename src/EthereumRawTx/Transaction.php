@@ -1,6 +1,8 @@
 <?php
 namespace EthereumRawTx;
 
+use BitWasp\Buffertools\Buffertools;
+use EthereumRawTx\Encoder\AddressEncoder;
 use EthereumRawTx\Encoder\Keccak;
 use EthereumRawTx\Rlp\RlpEncoder;
 use EthereumRawTx\Tool\Hex;
@@ -9,11 +11,6 @@ use BitWasp\Buffertools\Buffer;
 
 class Transaction
 {
-    /**
-     * @var Buffer $chainId
-     */
-    protected $chainId;
-
     /**
      * @var Buffer $nonce
      */
@@ -87,13 +84,13 @@ class Transaction
      */
     public function getRaw(Buffer $privateKey, Buffer $chainId = null): Buffer
     {
-        $this->chainId = null === $chainId ? Buffer::int('1') : $chainId;
+        $chainId = $chainId ?? Buffer::int('1');
 
         $this->v = new Buffer();
         $this->r = new Buffer();
         $this->s = new Buffer();
 
-        $this->sign($privateKey);
+        $this->sign($privateKey, $chainId);
 
         return $this->serialize();
     }
@@ -117,13 +114,62 @@ class Transaction
     }
 
     /**
-     * @param Buffer $privateKey
+     * @param Buffer $r
+     * @param Buffer $s
+     * @param Buffer $v
+     * @param Buffer|null $chainId
+     * @return Buffer
      * @throws \Exception
      */
-    protected function sign(Buffer $privateKey)
+    public function getSigner(Buffer $r, Buffer $s, Buffer $v, Buffer $chainId = null): Buffer
+    {
+        $chainId = $chainId ?? Buffer::int('1');
+
+        $recId = $v->getInt() - 27 - $chainId->getInt() * 2 - 8;
+
+        if ($recId > 3 || $recId < 0) {
+            throw new \Exception("Incorrect signature or chain id");
+        }
+
+        /** @var Buffer $hash */
+        $hash = $this->hash($chainId);
+
+        /** @var resource $context */
+        $context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
+
+        $signature = Buffertools::concat($r, $s);
+
+        $recoverableSignature = '';
+        secp256k1_ecdsa_recoverable_signature_parse_compact($context, $recoverableSignature, $signature->getBinary(), $recId);
+
+        $publicKey = '';
+        secp256k1_ecdsa_recover($context, $publicKey, $recoverableSignature, $hash->getBinary());
+
+        $serializedPublicKey = '';
+        secp256k1_ec_pubkey_serialize($context, $serializedPublicKey, $publicKey, 0);
+        $serializedPublicKey = new Buffer($serializedPublicKey);
+
+        /*
+         * public key return must be prefixed with 0x04
+         * @see https://github.com/Bit-Wasp/secp256k1-php/issues/107
+         */
+        if (substr($serializedPublicKey->getHex(), 0, 2) !== '04') {
+            throw new \Exception("Malformed public key");
+        }
+        $serializedPublicKey = Buffer::hex(substr($serializedPublicKey->getHex(), 2));
+
+        return AddressEncoder::publicKeyToAddress($serializedPublicKey);
+    }
+
+    /**
+     * @param Buffer $privateKey
+     * @param Buffer $chainId
+     * @throws \Exception
+     */
+    protected function sign(Buffer $privateKey, Buffer $chainId)
     {
         /** @var Buffer $hash */
-        $hash = $this->hash();
+        $hash = $this->hash($chainId);
 
         /** @var resource $context */
         $context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
@@ -148,19 +194,21 @@ class Transaction
 
         $this->r = Buffer::hex(Hex::trim(substr($sign->getHex(), 0, 64)));
         $this->s = Buffer::hex(Hex::trim(substr($sign->getHex(), 64)));
-        $this->v = Buffer::int($recId + 27 + $this->chainId->getInt() * 2 + 8);
+        $this->v = Buffer::int($recId + 27 + $chainId->getInt() * 2 + 8);
     }
 
     /**
+     * @param Buffer $chainId
      * @return Buffer
+     * @throws \Exception
      */
-    protected function hash(): Buffer
+    protected function hash(Buffer $chainId): Buffer
     {
         /** @var array $raw */
         $raw = $this->getInput();
 
-        if ($this->chainId->getInt() > 0) {
-            $raw['v'] = $this->chainId;
+        if ($chainId->getInt() > 0) {
+            $raw['v'] = $chainId;
             $raw['r'] = new Buffer();
             $raw['s'] = new Buffer();
         } else {
