@@ -2,6 +2,7 @@
 
 use BitWasp\Buffertools\Buffer;
 use EthereumRawTx\Rlp\RlpDecoder;
+use EthereumRawTx\Rlp\RlpEncoder;
 
 describe("Rlp Decoder ", function () {
 
@@ -65,6 +66,14 @@ describe("Rlp Decoder ", function () {
         $result = RlpDecoder::decode(Buffer::hex($encodeValue));
 
         expect($result)->equal([[],[[]],[[],[[]]]]);
+    });
+
+    it("the encoded integer 8", function () {
+
+        /** @var Buffer $result */
+        $result = RlpDecoder::decode(RlpEncoder::encode(Buffer::int(8)));
+
+        expect((int) $result->getInt())->equal(8);
     });
 
     it("the encoded integer 1024 ('\x04\x00')", function () {
