@@ -247,4 +247,7 @@ contract Sample {
           b: true
       }));
     }
+
+    function() public payable{
+    }
 }
