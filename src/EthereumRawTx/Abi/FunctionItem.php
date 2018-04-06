@@ -3,6 +3,8 @@ namespace EthereumRawTx\Abi;
 
 class FunctionItem extends AbstractItem
 {
+    use ParseInputTrait;
+
     const DEFAULT_NAME_PAYABLE = "__default_payable__";
     const DEFAULT_NAME_NOT_PAYABLE = "__default__";
 
@@ -82,18 +84,6 @@ class FunctionItem extends AbstractItem
 
         foreach ($this->getOutputs() as $i => $output) {
             $result [$output->getName()] = $output->parse($hexData, $position);
-        }
-
-        return $result;
-    }
-
-    public function parseInputs(string $hexData)
-    {
-        $result = [];
-        $position = 0;
-
-        foreach ($this->getInputs() as $i => $input) {
-            $result [$input->getName()] = $input->parse($hexData, $position);
         }
 
         return $result;

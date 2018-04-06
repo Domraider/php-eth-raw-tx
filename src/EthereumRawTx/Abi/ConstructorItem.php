@@ -3,6 +3,8 @@ namespace EthereumRawTx\Abi;
 
 class ConstructorItem extends AbstractItem
 {
+    use ParseInputTrait;
+
     const NAME = "constructor";
 
     public function __construct(array $item)
