@@ -1077,6 +1077,15 @@ describe("Abi", function () {
                 expect($inputs['indexed_string']->getHex())->to->equal("eec297efab6ea7ac890e13abf7b784bfeec297efab6ea7ac890e13abf7b784bf");
             });
         });
+        context("FallbackItem", function() {
+            it('build from factory', function () {
+                $item = \EthereumRawTx\Abi\AbstractItem::factory([
+                    'type' => \EthereumRawTx\Abi\AbstractItem::ITEM_TYPE_FALLBACK
+                ]);
+
+                expect($item)->to->instanceof(\EthereumRawTx\Abi\FallbackItem::class);
+            });
+        });
     });
 
     context("Abi", function() {

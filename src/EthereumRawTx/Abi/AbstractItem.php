@@ -9,6 +9,7 @@ abstract class AbstractItem
     const ITEM_TYPE_CONSTRUCTOR = 'constructor';
     const ITEM_TYPE_FUNCTION = 'function';
     const ITEM_TYPE_EVENT = 'event';
+    const ITEM_TYPE_FALLBACK = 'fallback';
 
     /** @var array  */
     protected $data;
@@ -31,6 +32,8 @@ abstract class AbstractItem
                 return new FunctionItem($item);
             case self::ITEM_TYPE_EVENT:
                 return new EventItem($item);
+            case self::ITEM_TYPE_FALLBACK:
+                return new FallbackItem($item);
             default:
                 throw new \Exception("Unknown type {$item['type']}");
         }
