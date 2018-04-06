@@ -159,7 +159,7 @@ class RlpDecoder
         $length = 0;
 
         for ($i = 1; $i <= $lengthOfLength; $i++) {
-            $length += ($data[$pos + 1] & 0xff) << (8 * $pow);
+            $length += ($data[$pos + $i] & 0xff) << (8 * $pow);
             $pow--;
         }
 
