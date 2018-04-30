@@ -16,7 +16,7 @@ class RlpDecoder
      * byte with value 0x80 plus the length of the string followed by the
      * string. The range of the first byte is thus [0x80, 0xb7].
      */
-    public const OFFSET_SHORT_STRING = 0x80;
+    const OFFSET_SHORT_STRING = 0x80;
 
     /**
      * [0xb7]
@@ -27,7 +27,7 @@ class RlpDecoder
      * \xb9\x04\x00 followed by the string. The range of the first byte is thus
      * [0xb8, 0xbf].
      */
-    public const OFFSET_LONG_STRING = 0xb7;
+    const OFFSET_LONG_STRING = 0xb7;
 
     /**
      * [0xc0]
@@ -37,7 +37,7 @@ class RlpDecoder
      * of the RLP encodings of the items. The range of the first byte is thus
      * [0xc0, 0xf7].
      */
-    public const OFFSET_SHORT_LIST = 0xc0;
+    const OFFSET_SHORT_LIST = 0xc0;
 
     /**
      * [0xf7]
@@ -47,7 +47,7 @@ class RlpDecoder
      * followed by the concatenation of the RLP encodings of the items. The
      * range of the first byte is thus [0xf8, 0xff].
      */
-    public const OFFSET_LONG_LIST = 0xf7;
+    const OFFSET_LONG_LIST = 0xf7;
 
 
     public static function decode(Buffer $input)
