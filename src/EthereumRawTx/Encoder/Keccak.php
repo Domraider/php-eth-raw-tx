@@ -2,6 +2,7 @@
 namespace EthereumRawTx\Encoder;
 
 use BitWasp\Buffertools\Buffer;
+use kornrunner\Keccak as Sha3;
 
 class Keccak
 {
@@ -14,14 +15,7 @@ class Keccak
     static function hash(Buffer $a, int $bits = 256): Buffer
     {
         /** @var string $sha */
-        $sha = exec(sprintf(
-            'echo "%s"  | keccak-%dsum -x -l',
-            $a->getHex(),
-            $bits
-        ));
-
-        // clean up command result
-        $sha = substr($sha, 0, 64);
+        $sha = Sha3::hash(hex2bin($a->getHex()), $bits);
 
         return Buffer::hex($sha);
     }

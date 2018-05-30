@@ -46,38 +46,6 @@ extension=secp256k1.so
 ```
 
 
-
-### keccak-256sum
-
-You need [keccak-256sum command line](https://github.com/maandree/sha3sum).
-Which itself needs [libkeccak](https://github.com/maandree/libkeccak) to be installed on your system.
-
-Last tests were run using the following versions :
-* sha3sum-1.1.4
-* libkeccak-1.1.4
-
-On **macOS** you may find clues [here](https://github.com/maandree/libkeccak/issues/7).
-
-First install libkeccak
-```bash
-$> curl -L0k https://github.com/maandree/libkeccak/archive/1.1.4.zip > libkeccak-1.1.4.zip
-$> unzip libkeccak-1.1.4.zip
-$> cd libkeccak-1.1.4
-$> make
-$> sudo make install PREFIX=/usr
-$>
-```
-
-Then sha3sum
-```bash
-$> curl -L0k https://github.com/maandree/sha3sum/archive/1.1.4.zip > sha3sum-1.1.4.zip
-$> unzip sha3sum-1.1.4.zip
-$> cd sha3sum-1.1.4
-$> make
-$> sudo make install PREFIX=/usr
-$>
-```
-
 ## Examples
 
 You may run examples in `examples` folder.
