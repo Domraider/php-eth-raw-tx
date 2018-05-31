@@ -203,7 +203,7 @@ class Transaction
 
         $this->r = Buffer::hex(Hex::trim(substr($sign->getHex(), 0, 64)));
         $this->s = Buffer::hex(Hex::trim(substr($sign->getHex(), 64)));
-        $this->v = Buffer::int($recId + 27 + $chainId->getInt() * 2 + 8);
+        $this->v = Buffer::int($recId + 27 + ($chainId->getInt() ? $chainId->getInt() * 2 + 8 : 0));
     }
 
     /**
