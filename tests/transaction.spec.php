@@ -21,6 +21,25 @@ describe("Transaction ", function () {
 
     });
 
+    it("get raw when 00 prefixed signature element", function () {
+
+        $chainId = \BitWasp\Buffertools\Buffer::int(4); // rinkeby
+
+        $tx = new \EthereumRawTx\Transaction(
+            BitWasp\Buffertools\Buffer::hex('920020ce6437cacec8a0a0fe61df0ad3f87a4b17'),
+            null,
+            BitWasp\Buffertools\Buffer::hex('835fc6ca00000000000000000000000000000000000000000000000000b1a2bc2ec50000'),
+            \BitWasp\Buffertools\Buffer::int(67),
+            \BitWasp\Buffertools\Buffer::int(1000000000),
+            \BitWasp\Buffertools\Buffer::int(129522)
+        );
+
+        $raw = $tx->getRaw(BitWasp\Buffertools\Buffer::hex('0000000000000000000000000000000000000000000000000000000000000001'), $chainId);
+
+        expect($raw->getHex())->to->equal('f88843843b9aca008301f9f294920020ce6437cacec8a0a0fe61df0ad3f87a4b1780a4835fc6ca00000000000000000000000000000000000000000000000000b1a2bc2ec500002ba0683b2a0f457e373d379d60f6ae3a8d18cdae051ff45ef7e22eb3bab6d63e818da000177aa322c9af18d9eee2a87df253679a65e3bb050a21da05b85f5e6fb97e1d');
+
+    });
+
     context("get signer", function () {
         it("with antireplay", function () {
             $rawTx = "f86a0d8477359400825208942e2a1ccc9f972fa08213ce689d4f83e6c8bed46987214e7d3b0c6c008025a0393437d069f6a7462e9fa18aaa68d11b9d493531342ea8332d6c7d50292a463ca00a8f4e190b4e39037ca6e8b07607a94c47671d77b3f16be0a8477eb6e29bbeaf";
