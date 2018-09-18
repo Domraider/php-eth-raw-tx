@@ -146,6 +146,10 @@ class Transaction
         /** @var resource $context */
         $context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
 
+        // pad r and s left
+        $r = Hex::padLeft($r, 64);
+        $s = Hex::padLeft($s, 64);
+
         $signature = Buffertools::concat($r, $s);
 
         $recoverableSignature = '';

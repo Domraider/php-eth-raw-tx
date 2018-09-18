@@ -83,5 +83,27 @@ describe("Transaction ", function () {
 
             expect($signer->getHex())->to->equal('9f663e734a345bbc61eda13b9d6ac25e0edc8a41');
         });
+        it("get signer when signature r or s is shorter", function () {
+            $rawTx = "f88743843b9aca008301f9f294920020ce6437cacec8a0a0fe61df0ad3f87a4b1780a4835fc6ca00000000000000000000000000000000000000000000000000b1a2bc2ec500002ba0683b2a0f457e373d379d60f6ae3a8d18cdae051ff45ef7e22eb3bab6d63e818d9f177aa322c9af18d9eee2a87df253679a65e3bb050a21da05b85f5e6fb97e1d";
+            $decoded = \EthereumRawTx\Rlp\RlpDecoder::decode(Buffer::hex($rawTx));
+
+            $tx = new \EthereumRawTx\Transaction(
+                $decoded[3],
+                $decoded[4],
+                $decoded[5],
+                $decoded[0],
+                $decoded[1],
+                $decoded[2]
+            );
+
+            $signer = $tx->getSigner(
+                $decoded[7],
+                $decoded[8],
+                $decoded[6],
+                Buffer::int(4)
+            );
+
+            expect($signer->getHex())->to->equal('7e5f4552091a69125d5dfcb7b8c2659029395bdf');
+        });
     });
 });

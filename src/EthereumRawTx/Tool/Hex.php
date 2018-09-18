@@ -1,6 +1,8 @@
 <?php
 namespace EthereumRawTx\Tool;
 
+use BitWasp\Buffertools\Buffer;
+
 class Hex
 {
     /**
@@ -14,6 +16,19 @@ class Hex
         }
 
         return $hex;
+    }
+
+    /**
+     * @param Buffer $hex
+     * @param int $length
+     * @return Buffer
+     * @throws \Exception
+     */
+    static function padLeft(Buffer $hex, int $length): Buffer
+    {
+        $hex = $hex->getHex();
+        $hex = str_pad($hex, $length, "0", STR_PAD_LEFT);
+        return Buffer::hex($hex);
     }
 
     /**
