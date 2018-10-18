@@ -24,7 +24,7 @@ class Hex
      * @return Buffer
      * @throws \Exception
      */
-    static function padLeft(Buffer $hex, int $length): Buffer
+    static function leftPad(Buffer $hex, int $length): Buffer
     {
         $hex = $hex->getHex();
         $hex = str_pad($hex, $length, "0", STR_PAD_LEFT);
