@@ -62,9 +62,22 @@ $raw = $tx->getRaw(\BitWasp\Buffertools\Buffer::hex(MY_PRIVATE_KEY));
 ```
 
 Demo :
-```bash
-php examples/send_ether.php
-```
+
+Explore `examples` folder for demos.
+Some are meant to generate a whole signed tx to write the blockchain. They can be broadcasted using `eth_sendRawTransaction` using JSON-RPC.
+Some others aim to read the blockchain and generated data should simply be send using `eth_call` using JSON-RPC.
+Some are simply utility reading tools.
+Unfortunately some features may not be demonstrated yet. Do not hesitate to contribute.
+
+* `call_smart_contract` : Generate a raw data to read a Smart Contract.
+* `check_signature` : Tool to recover the signer address of a transaction.
+* `decode_smart_contract_event_reponse` : Tool to decode events from a `eth_getTransactionByHash` call.
+* `decode_smart_contract_reponse` : Tool to read an `eth_call` response. 
+* `decode_tx_params` : Tool to decode a `data` field from a transaction.
+* `deploy_smart_contract` : Generate a signed raw transaction for deploying a new Smart Contract.
+* `event_smart_contract` : Tool to get an event hash.  
+* `send_ether` : Generate a signed raw transaction for sending ETH .
+* `send_smart_contract` : Generate a signed raw transaction for writing on a Smart Contract function.
 
 ## Tests
 
