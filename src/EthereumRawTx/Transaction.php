@@ -57,6 +57,11 @@ class Transaction
     protected $s;
 
     /**
+     * @var null|resource
+     */
+    private $context;
+
+    /**
      * Transaction constructor.
      * @param Buffer|null $to
      * @param Buffer|null $value
@@ -64,8 +69,9 @@ class Transaction
      * @param Buffer|null $nonce
      * @param Buffer|null $gasPrice
      * @param Buffer|null $gasLimit
+     * @param null $context
      */
-    public function __construct(Buffer $to = null, Buffer $value = null, Buffer $data = null, Buffer $nonce = null, Buffer $gasPrice = null, Buffer $gasLimit = null)
+    public function __construct(Buffer $to = null, Buffer $value = null, Buffer $data = null, Buffer $nonce = null, Buffer $gasPrice = null, Buffer $gasLimit = null, $context = null)
     {
 
         $this->nonce = null === $nonce ? Buffer::int('1') : $nonce;
@@ -74,6 +80,7 @@ class Transaction
         $this->to = $to ?? new Buffer();
         $this->value = null === $value ? Buffer::int('0') : $value;
         $this->data = $data ??  new Buffer();
+        $this->context = $context;
     }
 
     /**
@@ -144,7 +151,7 @@ class Transaction
         $hash = $this->hash($chainId);
 
         /** @var resource $context */
-        $context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
+        $context = $this->getContext();
 
         // pad r and s left
         $r = Hex::padLeft($r, 64);
@@ -185,7 +192,7 @@ class Transaction
         $hash = $this->hash($chainId);
 
         /** @var resource $context */
-        $context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
+        $context = $this->getContext();
 
         if (strlen($privateKey->getHex()) != 64) {
             throw new \Exception("Incorrect private key");
@@ -247,6 +254,17 @@ class Transaction
         $raw = $this->getInput();
 
         return RlpEncoder::encode($raw);
+    }
+
+    /**
+     * @return resource
+     */
+    protected function getContext()
+    {
+        if (null === $this->context) {
+            $this->context = secp256k1_context_create(SECP256K1_CONTEXT_SIGN | SECP256K1_CONTEXT_VERIFY);
+        }
+        return $this->context;
     }
 
 }
