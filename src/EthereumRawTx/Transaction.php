@@ -57,7 +57,7 @@ class Transaction
     protected $s;
 
     /**
-     * @var null|resource
+     * @var resource|null
      */
     private $context;
 
@@ -69,7 +69,7 @@ class Transaction
      * @param Buffer|null $nonce
      * @param Buffer|null $gasPrice
      * @param Buffer|null $gasLimit
-     * @param null $context
+     * @param resource|null $context
      */
     public function __construct(Buffer $to = null, Buffer $value = null, Buffer $data = null, Buffer $nonce = null, Buffer $gasPrice = null, Buffer $gasLimit = null, $context = null)
     {
