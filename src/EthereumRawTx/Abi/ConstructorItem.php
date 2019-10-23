@@ -7,11 +7,6 @@ class ConstructorItem extends AbstractItem
 
     const NAME = "constructor";
 
-    public function __construct(array $item)
-    {
-        parent::__construct($item);
-    }
-
     protected function validate()
     {
         $this->data['name'] = self::NAME;

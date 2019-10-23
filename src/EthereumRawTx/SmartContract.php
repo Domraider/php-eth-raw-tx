@@ -93,11 +93,7 @@ class SmartContract
      */
     public function decodeFunctionResponse(string $prototypeHash, string $raw): array
     {
-        if(null === $function = $this->abi->getFunctionByPrototypeHash($prototypeHash)) {
-            throw new \Exception("Method does not exists in abi");
-        }
-
-        return $function->parseOutputs(Hex::cleanPrefix($raw));
+        return $this->abi->getFunctionByPrototypeHash($prototypeHash)->parseOutputs(Hex::cleanPrefix($raw));
     }
 
     /**

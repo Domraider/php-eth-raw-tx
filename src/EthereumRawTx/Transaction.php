@@ -1,4 +1,5 @@
 <?php
+
 namespace EthereumRawTx;
 
 use BitWasp\Buffertools\Buffertools;
@@ -8,57 +9,36 @@ use EthereumRawTx\Rlp\RlpEncoder;
 use EthereumRawTx\Tool\Hex;
 use BitWasp\Buffertools\Buffer;
 
-
 class Transaction
 {
-    /**
-     * @var Buffer $nonce
-     */
+    /** @var Buffer $nonce */
     protected $nonce;
 
-    /**
-     * @var Buffer $gasPrice
-     */
+    /** @var Buffer $gasPrice */
     protected $gasPrice;
 
-    /**
-     * @var Buffer $gasLimit
-     */
+    /** @var Buffer $gasLimit */
     protected $gasLimit;
 
-    /**
-     * @var String $to
-     */
+    /** @var Buffer $to */
     protected $to;
 
-    /**
-     * @var Buffer $value
-     */
+    /** @var Buffer $value */
     protected $value;
 
-    /**
-     * @var String $data
-     */
+    /** @var Buffer $data */
     protected $data;
 
-    /**
-     * @var String|null $v
-     */
+    /** @var Buffer|null $v */
     protected $v;
 
-    /**
-     * @var String|null $r
-     */
+    /** @var Buffer|null $r */
     protected $r;
 
-    /**
-     * @var String|null $s
-     */
+    /** @var Buffer|null $s */
     protected $s;
 
-    /**
-     * @var resource|null
-     */
+    /** @var resource|null */
     private $context;
 
     /**
@@ -74,18 +54,18 @@ class Transaction
     public function __construct(Buffer $to = null, Buffer $value = null, Buffer $data = null, Buffer $nonce = null, Buffer $gasPrice = null, Buffer $gasLimit = null, $context = null)
     {
 
-        $this->nonce = null === $nonce ? Buffer::int('1') : $nonce;
-        $this->gasPrice = null === $gasPrice ? Buffer::int('10000000000000') : $gasPrice;
-        $this->gasLimit = null === $gasLimit ? Buffer::int('196608') : $gasLimit;
+        $this->nonce = $nonce ?? Buffer::int('1');
+        $this->gasPrice = $gasPrice ?? Buffer::int('10000000000000');
+        $this->gasLimit = $gasLimit ?? Buffer::int('196608');
         $this->to = $to ?? new Buffer();
-        $this->value = null === $value ? Buffer::int('0') : $value;
+        $this->value = $value ?? Buffer::int('0');
         $this->data = $data ??  new Buffer();
         $this->context = $context;
     }
 
     /**
      * @param Buffer $privateKey
-     * @param Buffer $chainId (1 => mainet, 3 => robsten, 4 => rinkeby)
+     * @param Buffer $chainId (1 => mainnet, 3 => ropsten, 4 => rinkeby)
      * @return Buffer
      * @throws \Exception
      */
@@ -232,17 +212,10 @@ class Transaction
             $raw['r'] = new Buffer();
             $raw['s'] = new Buffer();
         } else {
-            unset($raw['v']);
-            unset($raw['r']);
-            unset($raw['s']);
+            unset($raw['v'], $raw['r'], $raw['s']);
         }
 
-        /** @var Buffer $hash */
-        $hash = RlpEncoder::encode($raw);
-        /** @var Buffer $shaed */
-        $shaed = Keccak::hash($hash);
-
-        return $shaed;
+        return Keccak::hash(RlpEncoder::encode($raw));
     }
 
     /**

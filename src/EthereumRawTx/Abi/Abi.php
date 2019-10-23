@@ -21,9 +21,6 @@ class Abi
 
     protected function parse()
     {
-        /** @var array $return */
-        $return = [];
-
         foreach($this->raw as $abiItem)
         {
             $item = AbstractItem::factory($abiItem);
@@ -65,13 +62,13 @@ class Abi
 
     public function getFunctionByPrototypeHash($hash): FunctionItem
     {
-        $hash = substr($hash, 0, 8);
+        $function = $this->functions[substr($hash, 0, 8)] ?? null;
 
-        if (!isset($this->functions[$hash])) {
+        if (null === $function) {
             throw new \Exception('Function not found');
         }
 
-        return $this->functions[$hash];
+        return $function;
     }
 
     public function getEventByPrototypeHash($hash): EventItem
