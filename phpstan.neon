@@ -1,0 +1,6 @@
+parameters:
+  ignoreErrors:
+    - message: '#Constructor of class EthereumRawTx\\Abi\\FallbackItem has an unused parameter \$item#'
+      path: src/EthereumRawTx/Abi/FallbackItem.php
+    - message: '#EthereumRawTx\\Abi\\FallbackItem::__construct\(\) does not call parent constructor from EthereumRawTx\\Abi\\AbstractItem\.#'
+      path: src/EthereumRawTx/Abi/FallbackItem.php
