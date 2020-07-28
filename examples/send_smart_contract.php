@@ -21,7 +21,7 @@ $hash = \EthereumRawTx\Abi\AbstractItem::hashPrototype("bid(uint256)");
 $tx = new \EthereumRawTx\Transaction(
     $contractAddress,
     null,
-    $sc->getFunctionBin($hash, [\BitWasp\Buffertools\Buffer::int(16)]),
+    $sc->getFunctionBin($hash, [EthereumRawTx\Encoder\BufferNumber::uint256(16)]),
     $nonce,
     \BitWasp\Buffertools\Buffer::int(40000000000),
     \BitWasp\Buffertools\Buffer::int(1000000)

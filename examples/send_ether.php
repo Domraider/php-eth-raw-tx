@@ -3,7 +3,7 @@ require_once __DIR__ . '/../vendor/autoload.php';
 
 $nonce = \BitWasp\Buffertools\Buffer::int(29);
 $to = \BitWasp\Buffertools\Buffer::hex('d44d259015b61a5fe5027221239d840d92583adb');
-$value = \BitWasp\Buffertools\Buffer::int('12345678901234567890123');
+$value = EthereumRawTx\Encoder\BufferNumber::uint('12345678901234567890123');
 $data = null;
 
 $pk = \BitWasp\Buffertools\Buffer::hex(getenv("PHP_ETH_RAW_TX_PK"));

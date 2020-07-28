@@ -136,6 +136,11 @@ abstract class AbstractItem
         return $short ? $this->shortPrototypeHash : $this->prototypeHash;
     }
 
+    /**
+     * @param array $args
+     * @return Buffer
+     * @throws \Exception
+     */
     public function inputsToHex(array $args)
     {
         if (count($args) !== count($this->getInputs())) {

@@ -17,4 +17,7 @@ $hash = \EthereumRawTx\Abi\AbstractItem::hashPrototype("getCurrentAmounts()");
 $raw = $sc->decodeFunctionResponse($hash, $responseRaw);
 
 echo "Parsed response :" . PHP_EOL;
-var_dump($raw);
+
+echo "Data _current : " . $raw['_current']->getInt() . PHP_EOL;
+echo "Data _minimal : " . $raw['_minimal']->getInt() . PHP_EOL;
+

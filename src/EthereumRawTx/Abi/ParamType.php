@@ -2,6 +2,7 @@
 namespace EthereumRawTx\Abi;
 
 use BitWasp\Buffertools\Buffer;
+use EthereumRawTx\Encoder\BufferNumber;
 use EthereumRawTx\Encoder\StringEncoder;
 
 class ParamType
@@ -115,6 +116,12 @@ class ParamType
         return 64;
     }
 
+    /**
+     * @param $raw
+     * @param int $position
+     * @return array|Buffer|BufferNumber
+     * @throws \Exception
+     */
     public function decode($raw, &$position = 0)
     {
         // Management of array
@@ -164,12 +171,29 @@ class ParamType
             case 'int':
             case 'uint':
                 $l = 64;
+
+                $type = $this->getName().'256';
+
                 if ($this->getLength()) {
                     $l = $this->getLength()/4;
                     $position += 64 - $l;
-                }
 
-                $return = Buffer::hex(substr($raw, $position, $l));
+                    // adjust length for template Buffer
+                    if($this->getLength() <= 8) {
+                        $type = $this->getName().'8';
+                    }else if($this->getLength() <= 16) {
+                        $type = $this->getName().'16';
+                    }else if($this->getLength() <= 32) {
+                        $type = $this->getName().'32';
+                    }else if($this->getLength() <= 64) {
+                        $type = $this->getName().'64';
+                    }else if($this->getLength() <= 128) {
+                        $type = $this->getName().'128';
+                    }else if($this->getLength() <= 256) {
+                        $type = $this->getName().'256';
+                    }
+                }
+                $return = BufferNumber::hex(substr($raw, $position, $l),$type);
                 $position += $l;
 
                 return $return;
@@ -205,6 +229,11 @@ class ParamType
         }
     }
 
+    /**
+     * @param Buffer $value
+     * @return string
+     * @throws \Exception
+     */
     static public function encodeUint(Buffer $value)
     {
         if (strlen($value->getHex()) > 64) {
@@ -215,6 +244,11 @@ class ParamType
         return str_pad($value->getHex(), 64, '0', STR_PAD_LEFT);
     }
 
+    /**
+     * @param $value
+     * @return array|string
+     * @throws \Exception
+     */
     public function encode($value)
     {
         // if is type array
@@ -233,7 +267,7 @@ class ParamType
 
             if($this->isDynamic())
             {
-                $return[] = self::encodeUint(Buffer::int(count($value)));
+                $return[] = BufferNumber::uint256(count($value))->getHex();
             }
 
             foreach($value as $key => $val) {
@@ -246,11 +280,11 @@ class ParamType
         switch ($this->getName()) {
             case 'int':
             case 'uint':
-                if (!$value instanceof Buffer) {
-                    throw new \Exception("Value must be a Buffer");
+                if (!$value instanceof BufferNumber) {
+                    throw new \Exception("Value must be a BufferNumber");
                 }
 
-                return self::encodeUint($value);
+                return str_pad($value->getHex(), 64, '0', STR_PAD_LEFT);
 
             case 'address':
                 if ($value instanceof Buffer === false) {
