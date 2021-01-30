@@ -26,12 +26,15 @@ $> make
 $> sudo make install
 $>
 ```
+Then secp256k1-php v0.1.2. 
 
-Then secp256k1-php
+Updating this section with fix for issue [#35](https://github.com/Domraider/php-eth-raw-tx/issues/35). 
+I have added SED to make extension compatible with latest secp256k1 library
 ```bash
 $> curl -L0k https://github.com/Bit-Wasp/secp256k1-php/archive/v0.1.2.zip > secp256k1-php-0.1.2.zip
 $> unzip secp256k1-php-0.1.2.zip
 $> cd secp256k1-php-0.1.2/secp256k1
+$> sed -i 's/secp256k1_ecdh(ctx, resultChars, pubkey, privKey->val);/secp256k1_ecdh(ctx, resultChars, pubkey, privKey->val, NULL, NULL);/' secp256k1.c
 $> phpize
 $> ./configure --with-secp256k1
 $> make
