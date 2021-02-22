@@ -19,7 +19,7 @@ abstract class AbstractItem
     protected $shortPrototypeHash;
     protected $inputsEncodedFixedPartLength;
 
-    static public function factory(array $item)
+    public static function factory(array $item)
     {
         if (!isset($item['type'])) {
             throw new \Exception('Missing field `type`');
@@ -61,9 +61,9 @@ abstract class AbstractItem
 
     protected function mapParams()
     {
-        foreach ($this->data['inputs'] as &$param) {
-            $param = new Param($param);
-        }
+        $this->data['inputs'] = array_map(static function ($param) {
+            return new Param($param);
+        }, $this->data['inputs']);
     }
 
     protected function setPrototype()

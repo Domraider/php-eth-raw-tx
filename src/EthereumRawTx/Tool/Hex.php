@@ -11,7 +11,7 @@ class Hex
      */
     static function trim(string $hex): string
     {
-        while (substr($hex, 0, 2) === "00") {
+        while (strpos($hex, "00") === 0) {
             $hex = substr($hex, 2);
         }
 
@@ -26,9 +26,7 @@ class Hex
      */
     static function padLeft(Buffer $hex, int $length): Buffer
     {
-        $hex = $hex->getHex();
-        $hex = str_pad($hex, $length, "0", STR_PAD_LEFT);
-        return Buffer::hex($hex);
+        return Buffer::hex(str_pad($hex->getHex(), $length, "0", STR_PAD_LEFT));
     }
 
     /**
@@ -37,10 +35,6 @@ class Hex
      */
     static function cleanPrefix(string $hex): string
     {
-        if(substr($hex,0,2) === '0x') {
-            return substr($hex, 2);
-        }
-
-        return $hex;
+        return str_replace('0x', '', $hex);
     }
 }

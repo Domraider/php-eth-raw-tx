@@ -7,7 +7,7 @@ class FallbackItem extends AbstractItem
 
     public function __construct(array $item)
     {
-        // do nothink
+        // do nothing
     }
 
     public function getPrototypeHash(bool $short = false)
