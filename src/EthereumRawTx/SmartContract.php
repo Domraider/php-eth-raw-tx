@@ -3,13 +3,13 @@ namespace EthereumRawTx;
 
 use BitWasp\Buffertools\Buffer;
 use EthereumRawTx\Abi\Abi;
-use EthereumRawTx\Encoder\Keccak;
 use EthereumRawTx\Tool\Hex;
 
 class SmartContract
 {
+    /** @var string */
     protected $bin;
-    /** @var Abi  */
+    /** @var Abi */
     protected $abi;
 
     /**
@@ -20,12 +20,12 @@ class SmartContract
      */
     public function __construct(string $bin, string $abi)
     {
-        if(!is_array(json_decode($abi, true))) {
+        if (false === $abi = json_decode($abi, true)) {
             throw new \Exception("Abi must be an Json");
         }
 
         $this->bin = Hex::cleanPrefix($bin);
-        $this->abi = new Abi(json_decode($abi, true));
+        $this->abi = new Abi($abi);
     }
 
     public function getAbi()
