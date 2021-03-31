@@ -107,28 +107,18 @@ class SmartContract
      */
     public function decodeEventResponse(array $values): array
     {
-        if (!isset($values['topics']) || !isset($values['topics'][0])) {
+        if (!isset($values['topics'][0])) {
             throw new \Exception("Missing topics");
         }
 
-        /** @var string $topic */
-        /** @var array $topics */
-        $topics = [];
-        for($i = 0; $i < count($values['topics']); $i++) {
-            if($i == 0){
-                $topic = Hex::cleanPrefix($values['topics'][$i]);
-            }
-            else {
-                array_push($topics, Hex::cleanPrefix($values['topics'][$i]));
-            }
-        }
+        $topics = array_map([Hex::class, 'cleanPrefix'], $values['topics']);
 
-        if(null === $event = $this->abi->getEventByPrototypeHash($topic)) {
+        if (null === $event = $this->abi->getEventByPrototypeHash($topics[0])) {
             throw new \Exception("Event does not exists in abi");
         }
 
         $values['eventName'] = $event->getName();
-        $values['data'] = $event->parseInputs(Hex::cleanPrefix($values['data']), array_map([Hex::class, 'cleanPrefix'], $values['topics']));
+        $values['data'] = $event->parseInputs(Hex::cleanPrefix($values['data']), $topics);
 
         return $values;
     }
